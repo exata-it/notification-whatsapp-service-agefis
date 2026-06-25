@@ -78,7 +78,7 @@ export function documentosFiscaisRoutes(fastify) {
 				summary: 'Enviar documento(s) fiscal(is) via WhatsApp',
 				body: whatsAppBodySchema,
 				description: [
-					'Envia um ou mais PDFs **já gerados** ao fiscalizado via WhatsApp (Evolution API).',
+					'Envia um ou mais PDFs **já gerados** ao fiscalizado via WhatsApp ',
 					'',
 					'O serviço **não gera** o PDF — apenas recebe e encaminha. Cada arquivo é enviado',
 					'como mensagem de documento separada, precedida de uma saudação e seguida de um aviso final.',
