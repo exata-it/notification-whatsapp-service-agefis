@@ -21,6 +21,10 @@ export default fp(async fastify => {
 			},
 			servers: [
 				{
+					url: 'https://agefis-notificationservice-qdq4de-bb0f39-72-60-253-82.sslip.io',
+					description: 'Produção'
+				},
+				{
 					url: 'http://localhost:3000',
 					description: 'Servidor de desenvolvimento'
 				}
