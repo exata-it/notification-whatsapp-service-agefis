@@ -23,6 +23,34 @@ const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '7d'
 const CORS_ORIGIN =
 	process.env.CORS_ORIGIN || 'http://localhost:3000,http://localhost:3001'
 
+// Tamanho máximo do arquivo recebido (anexo enviado por whatsapp/email)
+const DOC_SIZE = Number.parseInt(process.env.DOC_SIZE) || 15 * 1024 * 1024
+// Máximo de arquivos por requisição
+const DOC_MAX_FILES = Number.parseInt(process.env.DOC_MAX_FILES) || 10
+
+// API keys internas (app bate direto). Lista separada por vírgula.
+const INTERNAL_API_KEYS = (process.env.INTERNAL_API_KEYS || '')
+	.split(',')
+	.map(k => k.trim())
+	.filter(Boolean)
+
+// WhatsApp Evolution API
+const WHATSAPP_API_URL = process.env.WHATSAPP_API_URL || ''
+const WHATSAPP_INSTANCE = process.env.WHATSAPP_INSTANCE || ''
+const WHATSAPP_API_KEY = process.env.WHATSAPP_API_KEY || ''
+
+// SMTP (relay de email)
+const SMTP_HOST = process.env.SMTP_HOST || ''
+const SMTP_PORT = Number.parseInt(process.env.SMTP_PORT) || 587
+const SMTP_SECURE = process.env.SMTP_SECURE === 'true'
+const SMTP_USER = process.env.SMTP_USER || ''
+const SMTP_PASSWORD = (process.env.SMTP_PASSWORD || '').replace(
+	/^["']|["']$/g,
+	''
+)
+const SMTP_FROM = process.env.SMTP_FROM || SMTP_USER
+const SMTP_FROM_NAME = process.env.SMTP_FROM_NAME || 'AGEFIS - Fiscalize'
+
 const settings = {
 	PORT,
 	JWT_ALGORITHM,
@@ -31,7 +59,24 @@ const settings = {
 	JWT_REFRESH_EXPIRES_IN,
 	CORS_ORIGIN,
 
-	NODE_ENV
+	NODE_ENV,
+
+	DOC_SIZE,
+	DOC_MAX_FILES,
+
+	INTERNAL_API_KEYS,
+
+	WHATSAPP_API_URL,
+	WHATSAPP_INSTANCE,
+	WHATSAPP_API_KEY,
+
+	SMTP_HOST,
+	SMTP_PORT,
+	SMTP_SECURE,
+	SMTP_USER,
+	SMTP_PASSWORD,
+	SMTP_FROM,
+	SMTP_FROM_NAME
 }
 
 export { settings }

@@ -27,7 +27,7 @@ export default fp(async fastify => {
 			],
 			security: [
 				{
-					BearerAuth: []
+					ApiKeyAuth: []
 				}
 			],
 			components: {
@@ -37,6 +37,13 @@ export default fp(async fastify => {
 						scheme: 'bearer',
 						bearerFormat: 'JWT',
 						description: 'Token JWT para autenticação. Formato: Bearer <token>'
+					},
+					ApiKeyAuth: {
+						type: 'apiKey',
+						in: 'header',
+						name: 'x-api-key',
+						description:
+							'API key interna para o app bater diretamente nas rotas de notificação'
 					}
 				}
 			}
@@ -87,5 +94,7 @@ export default fp(async fastify => {
 	// })
 
 	fastify.log.info('Plugin Scalar registrado com sucesso')
-	fastify.log.info('OpenAPI JSON disponível em: /docs/json ou /docs/openapi.json')
+	fastify.log.info(
+		'OpenAPI JSON disponível em: /docs/json ou /docs/openapi.json'
+	)
 })

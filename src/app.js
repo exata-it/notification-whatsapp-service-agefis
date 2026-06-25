@@ -1,3 +1,4 @@
+import fastifyMultipart from '@fastify/multipart'
 import Fastify from 'fastify'
 import fastifyQs from 'fastify-qs'
 import {
@@ -8,9 +9,15 @@ import corsPlugin from 'src/plugins/_cors'
 import rateLimitPlugin from 'src/plugins/_rate-limit'
 import swaggerPlugin from 'src/plugins/_swagger'
 import { z } from 'zod'
+import { settings } from './config'
 import { errorHandler, useUtils } from './helpers'
 import { jwtPlugin } from './plugins'
-import { segurancaRoutes, testeRoutes } from './routes'
+import {
+	apiKeyModuleRoutes,
+	notificacoesRoutes,
+	segurancaRoutes,
+	testeRoutes
+} from './routes'
 
 export async function createApp() {
 	// biome-ignore lint/correctness/noUnusedVariables: <>
@@ -26,6 +33,9 @@ export async function createApp() {
 	await server.register(jwtPlugin)
 	await server.register(rateLimitPlugin)
 	await server.register(fastifyQs, { parseArrays: true })
+	await server.register(fastifyMultipart, {
+		limits: { fileSize: settings.DOC_SIZE, files: settings.DOC_MAX_FILES }
+	})
 
 	const HomeSchema = {
 		tags: ['API Info'],
@@ -33,17 +43,19 @@ export async function createApp() {
 		description: 'Retorna informações básicas sobre a API',
 		response: {
 			200: z.object({
-				msg: z.string().describe('Mensagem de boas-vindas da API')
+				mensagem: z.string().describe('Mensagem de boas-vindas da API')
 			})
 		}
 	}
 
 	server.get('/', { schema: HomeSchema }, function handler(_request, _reply) {
-		return { msg: 'API TEMPLATE' }
+		return { mensagem: 'API de notificação de whatsapp da AGEFIS funcionando!' }
 	})
 
-	server.register(segurancaRoutes, { prefix: '/api/seguranca' })
-	server.register(testeRoutes, { prefix: '/api/teste' })
+	// server.register(segurancaRoutes, { prefix: '/api/seguranca' })
+	// server.register(testeRoutes, { prefix: '/api/teste' })
+	server.register(notificacoesRoutes, { prefix: '/api/notificacoes' })
+	// server.register(apiKeyModuleRoutes, { prefix: '/api' })
 
 	// if (settings.NODE_ENV === 'development') {
 	// 	server.addHook('onRequest', async (request) => {

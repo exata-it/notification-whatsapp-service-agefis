@@ -1,4 +1,5 @@
+export * from 'src/routes/api-key'
 export * from 'src/routes/base.route'
+export * from 'src/routes/notificacoes'
 export * from 'src/routes/seguranca'
 export * from 'src/routes/teste'
-
