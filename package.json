@@ -1,0 +1,62 @@
+{
+	"type": "module",
+	"name": "api",
+	"version": "1.0.0",
+	"description": "API backend construída com Fastify, Prisma, JWT e validações com Zod",
+	"main": "index.js",
+	"scripts": {
+		"build": "bun build src/index.js --outdir dist",
+		"dev": "bun --watch src/index.js",
+		"start": "bun dist/index.js",
+		"lint": "biome check .",
+		"format": "biome format .",
+		"prisma:generate": "bun x prisma generate",
+		"prisma:studio": "bun x prisma studio",
+		"seed:admin": "bun prisma/seed_admin.js",
+		"seed:cards": "bun prisma/seed_cards.js",
+		"generate": "plop",
+		"generate:crud": "plop 'CRUD Completo'",
+		"generate:permissions": "plop 'Adicionar Permissões'",
+		"generate:controller": "plop 'Apenas Controller'"
+	},
+	"keywords": [
+		"fastify",
+		"api",
+		"prisma",
+		"zod",
+		"nodejs",
+		"backend"
+	],
+	"author": "João Pedro",
+	"license": "ISC",
+	"packageManager": "bun@1.2.23",
+	"dependencies": {
+		"@fastify/cors": "^11.0.1",
+		"@fastify/jwt": "^9.1.0",
+		"@fastify/swagger": "^9.5.1",
+		"@prisma/adapter-pg": "7.2.0",
+		"@prisma/client": "7",
+		"@scalar/fastify-api-reference": "1.40.5",
+		"axios": "1.11.0",
+		"bcrypt": "^6.0.0",
+		"date-fns": "^4.1.0",
+		"dotenv": "17.2.3",
+		"fastify": "^5.4.0",
+		"fastify-plugin": "^5.0.1",
+		"fastify-qs": "^5.0.0",
+		"fastify-type-provider-zod": "^6.0.0",
+		"plop": "4.0.4",
+		"uuid": "^11.1.0",
+		"zod": "^4.1.8"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.2.4",
+		"@faker-js/faker": "10.1.0",
+		"@prisma/internals": "7.2.0",
+		"@types/bcrypt": "^5.0.2",
+		"@types/jsonwebtoken": "^9.0.10",
+		"@types/node": "^24.0.3",
+		"prisma": "7",
+		"tsx": "4.21.0"
+	}
+}
