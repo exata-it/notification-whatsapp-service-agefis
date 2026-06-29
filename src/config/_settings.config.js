@@ -44,10 +44,9 @@ const SMTP_HOST = process.env.SMTP_HOST || ''
 const SMTP_PORT = Number.parseInt(process.env.SMTP_PORT) || 587
 const SMTP_SECURE = process.env.SMTP_SECURE === 'true'
 const SMTP_USER = process.env.SMTP_USER || ''
-const SMTP_PASSWORD = (process.env.SMTP_PASSWORD || '').replace(
-	/^["']|["']$/g,
-	''
-)
+const SMTP_PASSWORD = process.env.SMTP_PASSWORD_B64
+	? Buffer.from(process.env.SMTP_PASSWORD_B64, 'base64').toString('utf8')
+	: (process.env.SMTP_PASSWORD || '').replace(/^["']|["']$/g, '')
 const SMTP_FROM = process.env.SMTP_FROM || SMTP_USER
 const SMTP_FROM_NAME = process.env.SMTP_FROM_NAME || 'AGEFIS - Fiscalize'
 

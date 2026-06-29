@@ -12,8 +12,24 @@ const {
 
 let _transporter = null
 
+function logSmtpConfig() {
+	console.log('[Email] SMTP config:', {
+		host: SMTP_HOST || '(vazio)',
+		port: SMTP_PORT,
+		user: SMTP_USER || '(vazio)',
+		userLen: SMTP_USER?.length ?? 0,
+		passLen: SMTP_PASSWORD?.length ?? 0,
+		passSet: Boolean(SMTP_PASSWORD),
+		b64Set: Boolean(process.env.SMTP_PASSWORD_B64),
+		rawSet: Boolean(process.env.SMTP_PASSWORD),
+		from: SMTP_FROM || '(vazio)'
+	})
+}
+
 function getTransporter() {
 	if (_transporter) return _transporter
+
+	logSmtpConfig()
 
 	_transporter = nodemailer.createTransport({
 		host: SMTP_HOST,
@@ -24,7 +40,9 @@ function getTransporter() {
 		tls: { rejectUnauthorized: false, minVersion: 'TLSv1.2' },
 		connectionTimeout: 30000,
 		greetingTimeout: 30000,
-		socketTimeout: 30000
+		socketTimeout: 30000,
+		logger: true,
+		debug: true
 	})
 
 	return _transporter
