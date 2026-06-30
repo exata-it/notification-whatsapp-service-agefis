@@ -32,6 +32,18 @@ async function apiKeyAuth(request, reply) {
 	const provided = request.headers['x-api-key']
 
 	if (!provided || !INTERNAL_API_KEYS.some(key => safeEqual(provided, key))) {
+		// DEBUG temporário: diagnosticar mismatch de API key. Remover após resolver.
+		request.log.warn(
+			{
+				tem_header: !!provided,
+				tamanho_recebido: provided?.length ?? 0,
+				prefixo_recebido: provided?.slice(0, 4) ?? null,
+				qtd_keys_configuradas: INTERNAL_API_KEYS.length,
+				tamanhos_configurados: INTERNAL_API_KEYS.map(k => k.length),
+				headers_recebidos: Object.keys(request.headers)
+			},
+			'[apikey] rejeitada — diagnóstico'
+		)
 		request.raw.resume()
 		return reply.code(401).send({
 			error: 'Unauthorized',
