@@ -49,6 +49,26 @@ function validarPdfs(files) {
 	return null
 }
 
+/**
+ * Regras de tipoDocumento/numeroDocumento:
+ * - os dois andam juntos (ambos ou nenhum);
+ * - quando usados, exigem exatamente um arquivo.
+ * @returns {string|null} mensagem de erro ou null se ok
+ */
+function validarDocumentoFiscal(fields, files) {
+	const temTipo = !!fields.tipoDocumento
+	const temNumero = !!fields.numeroDocumento
+
+	if (temTipo !== temNumero) {
+		return 'tipoDocumento e numeroDocumento devem ser enviados juntos'
+	}
+	if (temTipo && temNumero && files.length !== 1) {
+		return 'tipoDocumento e numeroDocumento exigem exatamente um arquivo'
+	}
+
+	return null
+}
+
 function nomeArquivoSeguro(base) {
 	return `${base}.pdf`.replace(/[/\\?%*:|"<>]/g, '-')
 }
@@ -80,6 +100,11 @@ function documentosFiscaisController() {
 				success: false,
 				error: fieldsResult.error.issues[0].message
 			})
+		}
+
+		const erroDoc = validarDocumentoFiscal(fieldsResult.data, parsed.files)
+		if (erroDoc) {
+			return reply.code(400).send({ success: false, error: erroDoc })
 		}
 
 		const {
@@ -188,6 +213,11 @@ function documentosFiscaisController() {
 				success: false,
 				error: fieldsResult.error.issues[0].message
 			})
+		}
+
+		const erroDoc = validarDocumentoFiscal(fieldsResult.data, parsed.files)
+		if (erroDoc) {
+			return reply.code(400).send({ success: false, error: erroDoc })
 		}
 
 		const {
