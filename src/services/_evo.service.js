@@ -5,6 +5,7 @@ const { WHATSAPP_API_URL, WHATSAPP_INSTANCE, WHATSAPP_API_KEY } = settings
 
 const evoClient = axios.create({
 	baseURL: WHATSAPP_API_URL,
+	timeout: 30_000,
 	headers: {
 		'Content-Type': 'application/json',
 		apikey: WHATSAPP_API_KEY
