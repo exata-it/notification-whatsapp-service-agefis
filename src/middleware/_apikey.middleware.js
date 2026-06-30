@@ -19,6 +19,9 @@ async function apiKeyAuth(request, reply) {
 	const { INTERNAL_API_KEYS } = settings
 
 	if (INTERNAL_API_KEYS.length === 0) {
+		// Drena o upload pendente: sem isso, rejeitar uma request multipart antes
+		// de consumir o body trava o cliente por backpressure até o timeout dele.
+		request.raw.resume()
 		return reply.code(503).send({
 			error: 'Service Unavailable',
 			message: 'API key não configurada no servidor (INTERNAL_API_KEYS)',
@@ -29,6 +32,7 @@ async function apiKeyAuth(request, reply) {
 	const provided = request.headers['x-api-key']
 
 	if (!provided || !INTERNAL_API_KEYS.some(key => safeEqual(provided, key))) {
+		request.raw.resume()
 		return reply.code(401).send({
 			error: 'Unauthorized',
 			message: 'API key inválida ou ausente',
