@@ -73,15 +73,59 @@ function nomeArquivoSeguro(base) {
 	return `${base}.pdf`.replace(/[/\\?%*:|"<>]/g, '-')
 }
 
+/**
+ * Resumo seguro dos arquivos para log (sem despejar o buffer).
+ */
+function resumoArquivos(files = []) {
+	return files.map(f => ({
+		filename: f.filename,
+		mimetype: f.mimetype,
+		tamanho_bytes: f.buffer?.length ?? 0,
+		assinatura: f.buffer?.subarray(0, 4).toString('latin1') ?? null
+	}))
+}
+
+/**
+ * Resumo dos campos de texto para log (trunca valores longos).
+ */
+function resumoFields(fields = {}) {
+	const out = {}
+	for (const [k, v] of Object.entries(fields)) {
+		out[k] = typeof v === 'string' && v.length > 80 ? `${v.slice(0, 80)}…` : v
+	}
+	return out
+}
+
 function documentosFiscaisController() {
 	/**
 	 * Envia um ou mais documentos fiscais (PDFs) via WhatsApp.
 	 * Campos multipart: telefone, nome, tipoDocumento, numeroDocumento + arquivo(s)
 	 */
 	async function sendWhatsApp(request, reply) {
+		const log = request.log.child({ rota: 'send-whatsapp' })
+		const t0 = Date.now()
+		log.info('[whatsapp] início')
+
 		const parsed = await lerMultipart(request)
+		log.info(
+			{
+				is_multipart: request.isMultipart(),
+				qtd_arquivos: parsed?.files?.length ?? 0,
+				arquivos: resumoArquivos(parsed?.files),
+				campos: resumoFields(parsed?.fields),
+				ms_parse: Date.now() - t0
+			},
+			'[whatsapp] multipart lido'
+		)
 
 		if (!settings.WHATSAPP_API_URL || !settings.WHATSAPP_INSTANCE) {
+			log.error(
+				{
+					tem_url: !!settings.WHATSAPP_API_URL,
+					tem_instancia: !!settings.WHATSAPP_INSTANCE
+				},
+				'[whatsapp] config ausente → 503'
+			)
 			return reply.code(503).send({
 				success: false,
 				error:
@@ -91,19 +135,31 @@ function documentosFiscaisController() {
 
 		const erroValidacao = validarPdfs(parsed?.files)
 		if (erroValidacao) {
+			log.warn({ erro: erroValidacao }, '[whatsapp] validação PDF falhou → 400')
 			return reply.code(400).send({ success: false, error: erroValidacao })
 		}
 
 		const fieldsResult = whatsAppFieldsSchema.safeParse(parsed.fields)
 		if (!fieldsResult.success) {
-			return reply.code(400).send({
-				success: false,
-				error: fieldsResult.error.issues[0].message
-			})
+			const erro = fieldsResult.error.issues[0].message
+			log.warn(
+				{ erro, issues: fieldsResult.error.issues },
+				'[whatsapp] validação de campos falhou → 400'
+			)
+			return reply.code(400).send({ success: false, error: erro })
 		}
 
 		const erroDoc = validarDocumentoFiscal(fieldsResult.data, parsed.files)
 		if (erroDoc) {
+			log.warn(
+				{
+					erro: erroDoc,
+					tem_tipo: !!fieldsResult.data.tipoDocumento,
+					tem_numero: !!fieldsResult.data.numeroDocumento,
+					qtd_arquivos: parsed.files.length
+				},
+				'[whatsapp] regra tipo/numero falhou → 400'
+			)
 			return reply.code(400).send({ success: false, error: erroDoc })
 		}
 
@@ -115,9 +171,18 @@ function documentosFiscaisController() {
 		} = fieldsResult.data
 
 		const numeroFormatado = evoService.formatNumber(telefone)
+		log.info(
+			{ telefone_original: telefone, numero_formatado: numeroFormatado, nome },
+			'[whatsapp] número formatado'
+		)
 
 		try {
+			const tVal = Date.now()
 			const numeroValido = await evoService.validateNumber(numeroFormatado)
+			log.info(
+				{ numero_valido: numeroValido, ms: Date.now() - tVal },
+				'[whatsapp] validação de número (Evolution)'
+			)
 			if (!numeroValido) {
 				return reply.code(400).send({
 					success: false,
@@ -125,9 +190,9 @@ function documentosFiscaisController() {
 				})
 			}
 		} catch (err) {
-			console.warn(
-				'[WhatsApp] Falha ao validar número (continuando):',
-				err.message
+			log.warn(
+				{ erro: err.message },
+				'[whatsapp] falha ao validar número (continuando)'
 			)
 		}
 
@@ -141,7 +206,12 @@ function documentosFiscaisController() {
 				`Foi emitido um *${tipoDocumento}* relacionado à fiscalização realizada.\n\n` +
 				`📎 ${total > 1 ? `${total} documentos serão enviados` : 'O documento será enviado'} a seguir. Por favor, aguarde...`
 
+			let tStep = Date.now()
 			await evoService.sendText(numeroFormatado, mensagemInicial)
+			log.info(
+				{ ms: Date.now() - tStep },
+				'[whatsapp] mensagem inicial enviada'
+			)
 
 			for (let i = 0; i < total; i++) {
 				const file = parsed.files[i]
@@ -150,6 +220,15 @@ function documentosFiscaisController() {
 					file.filename ||
 					nomeArquivoSeguro(`${tipoDocumento}${numeroDocTexto} ${i + 1}`)
 
+				tStep = Date.now()
+				log.info(
+					{
+						indice: `${i + 1}/${total}`,
+						fileName,
+						tamanho_bytes: file.buffer.length
+					},
+					'[whatsapp] enviando mídia'
+				)
 				await evoService.sendMedia({
 					number: numeroFormatado,
 					media: file.buffer.toString('base64'),
@@ -158,6 +237,10 @@ function documentosFiscaisController() {
 					mediatype: 'document',
 					mimetype: 'application/pdf'
 				})
+				log.info(
+					{ indice: `${i + 1}/${total}`, ms: Date.now() - tStep },
+					'[whatsapp] mídia enviada'
+				)
 			}
 
 			const mensagemFinal =
@@ -166,8 +249,14 @@ function documentosFiscaisController() {
 				`📞 Em caso de dúvidas, entre em contato com a AGEFIS.\n\n` +
 				`_Mensagem automática - não responda._`
 
+			tStep = Date.now()
 			await evoService.sendText(numeroFormatado, mensagemFinal)
+			log.info({ ms: Date.now() - tStep }, '[whatsapp] mensagem final enviada')
 
+			log.info(
+				{ total_arquivos: total, ms_total: Date.now() - t0 },
+				'[whatsapp] concluído → 200'
+			)
 			return reply.code(200).send({
 				success: true,
 				message: `Notificação enviada via WhatsApp com sucesso (${total} arquivo(s))`,
@@ -180,7 +269,16 @@ function documentosFiscaisController() {
 				}
 			})
 		} catch (error) {
-			console.error('[WhatsApp] Erro ao enviar:', error.message)
+			log.error(
+				{
+					erro: error.message,
+					codigo: error.code,
+					status_evo: error.response?.status,
+					resposta_evo: error.response?.data,
+					ms_total: Date.now() - t0
+				},
+				'[whatsapp] erro ao enviar → 500'
+			)
 			return reply.code(500).send({
 				success: false,
 				error: error.message || 'Erro ao enviar notificação via WhatsApp'
@@ -193,9 +291,24 @@ function documentosFiscaisController() {
 	 * Campos multipart: email, nome, tipoDocumento, numeroDocumento + arquivo(s)
 	 */
 	async function sendEmail(request, reply) {
+		const log = request.log.child({ rota: 'send-email' })
+		const t0 = Date.now()
+		log.info('[email] início')
+
 		const parsed = await lerMultipart(request)
+		log.info(
+			{
+				is_multipart: request.isMultipart(),
+				qtd_arquivos: parsed?.files?.length ?? 0,
+				arquivos: resumoArquivos(parsed?.files),
+				campos: resumoFields(parsed?.fields),
+				ms_parse: Date.now() - t0
+			},
+			'[email] multipart lido'
+		)
 
 		if (!settings.SMTP_HOST) {
+			log.error('[email] SMTP_HOST ausente → 503')
 			return reply.code(503).send({
 				success: false,
 				error: 'Email não configurado no servidor (SMTP_HOST)'
@@ -204,19 +317,31 @@ function documentosFiscaisController() {
 
 		const erroValidacao = validarPdfs(parsed?.files)
 		if (erroValidacao) {
+			log.warn({ erro: erroValidacao }, '[email] validação PDF falhou → 400')
 			return reply.code(400).send({ success: false, error: erroValidacao })
 		}
 
 		const fieldsResult = emailFieldsSchema.safeParse(parsed.fields)
 		if (!fieldsResult.success) {
-			return reply.code(400).send({
-				success: false,
-				error: fieldsResult.error.issues[0].message
-			})
+			const erro = fieldsResult.error.issues[0].message
+			log.warn(
+				{ erro, issues: fieldsResult.error.issues },
+				'[email] validação de campos falhou → 400'
+			)
+			return reply.code(400).send({ success: false, error: erro })
 		}
 
 		const erroDoc = validarDocumentoFiscal(fieldsResult.data, parsed.files)
 		if (erroDoc) {
+			log.warn(
+				{
+					erro: erroDoc,
+					tem_tipo: !!fieldsResult.data.tipoDocumento,
+					tem_numero: !!fieldsResult.data.numeroDocumento,
+					qtd_arquivos: parsed.files.length
+				},
+				'[email] regra tipo/numero falhou → 400'
+			)
 			return reply.code(400).send({ success: false, error: erroDoc })
 		}
 
@@ -227,11 +352,17 @@ function documentosFiscaisController() {
 			numeroDocumento
 		} = fieldsResult.data
 		const destino = email
+		log.info({ destino, nome }, '[email] campos validados')
 
 		try {
+			const tV = Date.now()
 			await mailService.verify()
+			log.info({ ms: Date.now() - tV }, '[email] conexão SMTP verificada')
 		} catch (verifyError) {
-			console.error('[Email] Erro ao verificar SMTP:', verifyError.message)
+			log.error(
+				{ erro: verifyError.message, codigo: verifyError.code },
+				'[email] falha ao verificar SMTP → 500'
+			)
 			return reply.code(500).send({
 				success: false,
 				error: 'Falha na conexão com servidor SMTP'
@@ -277,6 +408,11 @@ function documentosFiscaisController() {
 		}))
 
 		try {
+			const tS = Date.now()
+			log.info(
+				{ destino, total_anexos: total, assunto: 'Documento Fiscal - AGEFIS' },
+				'[email] enviando'
+			)
 			const info = await mailService.send({
 				to: destino,
 				subject: 'Documento Fiscal - AGEFIS',
@@ -284,6 +420,14 @@ function documentosFiscaisController() {
 				attachments
 			})
 
+			log.info(
+				{
+					messageId: info.messageId,
+					ms_envio: Date.now() - tS,
+					ms_total: Date.now() - t0
+				},
+				'[email] enviado → 200'
+			)
 			return reply.code(200).send({
 				success: true,
 				message: `Email enviado com sucesso (${total} arquivo(s))`,
@@ -297,7 +441,16 @@ function documentosFiscaisController() {
 				}
 			})
 		} catch (errorSend) {
-			console.error('[Email] Erro ao enviar:', errorSend.message)
+			log.error(
+				{
+					erro: errorSend.message,
+					codigo: errorSend.code,
+					comando: errorSend.command,
+					resposta_smtp: errorSend.response,
+					ms_total: Date.now() - t0
+				},
+				'[email] erro ao enviar → 500'
+			)
 			return reply.code(500).send({
 				success: false,
 				error: `Erro ao enviar email: ${errorSend.message}`
