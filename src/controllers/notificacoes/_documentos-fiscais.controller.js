@@ -20,6 +20,9 @@ async function lerMultipart(request) {
 		if (part.type === 'file') {
 			const buffer = await part.toBuffer()
 			files.push({ buffer, filename: part.filename, mimetype: part.mimetype })
+		} else if (part.fieldname in fields) {
+			// Campo repetido (ex.: tipoDocumento por arquivo) vira array, na ordem
+			fields[part.fieldname] = [].concat(fields[part.fieldname], part.value)
 		} else {
 			fields[part.fieldname] = part.value
 		}
@@ -50,23 +53,54 @@ function validarPdfs(files) {
 }
 
 /**
- * Regras de tipoDocumento/numeroDocumento:
- * - os dois andam juntos (ambos ou nenhum);
- * - quando usados, exigem exatamente um arquivo.
+ * Regras do campo `documentos` (metadados pareados pelo nome do arquivo):
+ * - cada entrada referencia um arquivo enviado (pelo nome exato);
+ * - sem entradas duplicadas para o mesmo arquivo;
+ * - arquivos referenciados precisam ter nome único no upload.
+ * Arquivo sem entrada usa o tipo padrão do canal.
  * @returns {string|null} mensagem de erro ou null se ok
  */
 function validarDocumentoFiscal(fields, files) {
-	const temTipo = !!fields.tipoDocumento
-	const temNumero = !!fields.numeroDocumento
+	const docs = fields.documentos ?? []
+	if (docs.length === 0) return null
 
-	if (temTipo !== temNumero) {
-		return 'tipoDocumento e numeroDocumento devem ser enviados juntos'
-	}
-	if (temTipo && temNumero && files.length !== 1) {
-		return 'tipoDocumento e numeroDocumento exigem exatamente um arquivo'
+	const nomes = files.map(f => f.filename)
+	const duplicadosUpload = new Set(
+		nomes.filter((n, i) => nomes.indexOf(n) !== i)
+	)
+
+	const vistos = new Set()
+	for (const d of docs) {
+		if (vistos.has(d.arquivo)) {
+			return `documentos: entrada duplicada para o arquivo "${d.arquivo}"`
+		}
+		vistos.add(d.arquivo)
+
+		if (!nomes.includes(d.arquivo)) {
+			return `documentos: arquivo "${d.arquivo}" não foi enviado. Arquivos recebidos: ${nomes.join(', ')}`
+		}
+		if (duplicadosUpload.has(d.arquivo)) {
+			return `documentos: mais de um arquivo enviado com o nome "${d.arquivo}" — nomes devem ser únicos para parear metadados`
+		}
 	}
 
 	return null
+}
+
+/**
+ * Pareia cada arquivo com seu tipo/número pelo nome do arquivo.
+ * @returns {{ file: object, tipo: string, numero: string|null }[]}
+ */
+function montarDocumentos(fields, files, tipoPadrao) {
+	const porArquivo = new Map((fields.documentos ?? []).map(d => [d.arquivo, d]))
+	return files.map(file => {
+		const meta = porArquivo.get(file.filename)
+		return {
+			file,
+			tipo: meta?.tipoDocumento ?? tipoPadrao,
+			numero: meta?.numeroDocumento ?? null
+		}
+	})
 }
 
 function nomeArquivoSeguro(base) {
@@ -99,7 +133,7 @@ function resumoFields(fields = {}) {
 function documentosFiscaisController() {
 	/**
 	 * Envia um ou mais documentos fiscais (PDFs) via WhatsApp.
-	 * Campos multipart: telefone, nome, tipoDocumento, numeroDocumento + arquivo(s)
+	 * Campos multipart: telefone, nome, documentos (JSON) + arquivo(s)
 	 */
 	async function sendWhatsApp(request, reply) {
 		const log = request.log.child({ rota: 'send-whatsapp' })
@@ -154,8 +188,7 @@ function documentosFiscaisController() {
 			log.warn(
 				{
 					erro: erroDoc,
-					tem_tipo: !!fieldsResult.data.tipoDocumento,
-					tem_numero: !!fieldsResult.data.numeroDocumento,
+					qtd_documentos: fieldsResult.data.documentos?.length ?? 0,
 					qtd_arquivos: parsed.files.length
 				},
 				'[whatsapp] regra tipo/numero falhou → 400'
@@ -163,12 +196,12 @@ function documentosFiscaisController() {
 			return reply.code(400).send({ success: false, error: erroDoc })
 		}
 
-		const {
-			telefone,
-			nome = 'Fiscalizado',
-			tipoDocumento = 'Documento Fiscal',
-			numeroDocumento
-		} = fieldsResult.data
+		const { telefone, nome = 'Fiscalizado' } = fieldsResult.data
+		const documentos = montarDocumentos(
+			fieldsResult.data,
+			parsed.files,
+			'Documento Fiscal'
+		)
 
 		const numeroFormatado = evoService.formatNumber(telefone)
 		log.info(
@@ -190,20 +223,37 @@ function documentosFiscaisController() {
 				})
 			}
 		} catch (err) {
+			const erroEvo = err.response?.data?.output?.payload?.message
+			const semResposta = !err.response
+			if (erroEvo === 'Connection Closed' || semResposta) {
+				log.error(
+					{ erro: erroEvo || err.message },
+					'[whatsapp] instância desconectada/indisponível → 503'
+				)
+				return reply.code(503).send({
+					success: false,
+					error:
+						'Instância do WhatsApp desconectada ou indisponível. Refaça o pareamento (QR code).'
+				})
+			}
 			log.warn(
 				{ erro: err.message },
 				'[whatsapp] falha ao validar número (continuando)'
 			)
 		}
 
-		const total = parsed.files.length
-		const numeroDocTexto = numeroDocumento ? ` - Nº ${numeroDocumento}` : ''
+		const total = documentos.length
 
 		try {
+			const listaDocs = documentos
+				.map(d => `• *${d.tipo}*${d.numero ? ` - Nº ${d.numero}` : ''}`)
+				.join('\n')
 			const mensagemInicial =
 				`🏛️ *AGEFIS - Agência de Fiscalização*\n\n` +
 				`Olá, *${nome}*!\n\n` +
-				`Foi emitido um *${tipoDocumento}* relacionado à fiscalização realizada.\n\n` +
+				(total > 1
+					? `Foram emitidos os seguintes documentos relacionados à fiscalização realizada:\n\n${listaDocs}\n\n`
+					: `Foi emitido um *${documentos[0].tipo}*${documentos[0].numero ? ` - Nº ${documentos[0].numero}` : ''} relacionado à fiscalização realizada.\n\n`) +
 				`📎 ${total > 1 ? `${total} documentos serão enviados` : 'O documento será enviado'} a seguir. Por favor, aguarde...`
 
 			let tStep = Date.now()
@@ -214,11 +264,11 @@ function documentosFiscaisController() {
 			)
 
 			for (let i = 0; i < total; i++) {
-				const file = parsed.files[i]
+				const { file, tipo, numero } = documentos[i]
+				const numeroTexto = numero ? ` - Nº ${numero}` : ''
 				const indice = total > 1 ? ` (${i + 1}/${total})` : ''
 				const fileName =
-					file.filename ||
-					nomeArquivoSeguro(`${tipoDocumento}${numeroDocTexto} ${i + 1}`)
+					file.filename || nomeArquivoSeguro(`${tipo}${numeroTexto} ${i + 1}`)
 
 				tStep = Date.now()
 				log.info(
@@ -233,7 +283,7 @@ function documentosFiscaisController() {
 					number: numeroFormatado,
 					media: file.buffer.toString('base64'),
 					fileName,
-					caption: `📄 *${tipoDocumento}*${numeroDocTexto}${indice}\n\n`,
+					caption: `📄 *${tipo}*${numeroTexto}${indice}\n\n`,
 					mediatype: 'document',
 					mimetype: 'application/pdf'
 				})
@@ -288,7 +338,7 @@ function documentosFiscaisController() {
 
 	/**
 	 * Envia um ou mais documentos fiscais (PDFs) como anexo via Email.
-	 * Campos multipart: email, nome, tipoDocumento, numeroDocumento + arquivo(s)
+	 * Campos multipart: email, nome, documentos (JSON) + arquivo(s)
 	 */
 	async function sendEmail(request, reply) {
 		const log = request.log.child({ rota: 'send-email' })
@@ -336,8 +386,7 @@ function documentosFiscaisController() {
 			log.warn(
 				{
 					erro: erroDoc,
-					tem_tipo: !!fieldsResult.data.tipoDocumento,
-					tem_numero: !!fieldsResult.data.numeroDocumento,
+					qtd_documentos: fieldsResult.data.documentos?.length ?? 0,
 					qtd_arquivos: parsed.files.length
 				},
 				'[email] regra tipo/numero falhou → 400'
@@ -345,12 +394,12 @@ function documentosFiscaisController() {
 			return reply.code(400).send({ success: false, error: erroDoc })
 		}
 
-		const {
-			email,
-			nome = 'Fiscalizado',
-			tipoDocumento = 'Documento',
-			numeroDocumento
-		} = fieldsResult.data
+		const { email, nome = 'Fiscalizado' } = fieldsResult.data
+		const documentos = montarDocumentos(
+			fieldsResult.data,
+			parsed.files,
+			'Documento'
+		)
 		const destino = email
 		log.info({ destino, nome }, '[email] campos validados')
 
@@ -369,8 +418,13 @@ function documentosFiscaisController() {
 			})
 		}
 
-		const total = parsed.files.length
-		const numeroDocTexto = numeroDocumento ? ` Nº ${numeroDocumento}` : ''
+		const total = documentos.length
+		const itensHtml = documentos
+			.map(
+				d =>
+					`<li><strong>${d.tipo}${d.numero ? ` Nº ${d.numero}` : ''}</strong></li>`
+			)
+			.join('\n\t\t\t\t\t\t')
 		const htmlBody = `
 			<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
 				<div style="background-color: #1a5f2a; padding: 20px; text-align: center;">
@@ -380,7 +434,7 @@ function documentosFiscaisController() {
 					<p>Prezado(a) <strong>${nome}</strong>,</p>
 					<p>Você possui ${total > 1 ? `${total} documentos fiscais disponíveis` : 'um documento fiscal disponível'}:</p>
 					<ul style="background: white; padding: 20px; border-radius: 5px;">
-						<li><strong>${tipoDocumento}${numeroDocTexto}</strong></li>
+						${itensHtml}
 					</ul>
 					<p>${total > 1 ? 'Os documentos estão anexados' : 'O documento está anexado'} a este email.</p>
 					<p style="font-size: 14px; color: #888;">
@@ -399,10 +453,10 @@ function documentosFiscaisController() {
 			</div>
 		`
 
-		const attachments = parsed.files.map((file, i) => ({
+		const attachments = documentos.map(({ file, tipo, numero }, i) => ({
 			filename:
 				file.filename ||
-				nomeArquivoSeguro(`${tipoDocumento}${numeroDocTexto} ${i + 1}`),
+				nomeArquivoSeguro(`${tipo}${numero ? ` Nº ${numero}` : ''} ${i + 1}`),
 			content: file.buffer,
 			contentType: 'application/pdf'
 		}))

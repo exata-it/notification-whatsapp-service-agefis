@@ -43,19 +43,23 @@ export const evoService = {
 	},
 
 	/**
-	 * Valida se um número possui WhatsApp ativo
+	 * Valida se um número possui WhatsApp ativo.
+	 * Lança o erro da Evolution API (ex.: instância desconectada) — o chamador
+	 * decide como tratar, para não confundir "erro" com "número inexistente".
 	 */
 	async validateNumber(number) {
-		try {
-			const results = await this.validateNumbers(number)
-			return results?.[0]?.exists === true
-		} catch (error) {
-			console.error(
-				`[EvoService] Falha na validação do número ${number}:`,
-				error.message
-			)
-			return false
-		}
+		const results = await this.validateNumbers(number)
+		return results?.[0]?.exists === true
+	},
+
+	/**
+	 * Estado da conexão da instância ('open' | 'connecting' | 'close')
+	 */
+	async getConnectionState() {
+		const response = await evoClient.get(
+			`/instance/connectionState/${WHATSAPP_INSTANCE}`
+		)
+		return response.data?.instance?.state
 	},
 
 	/**

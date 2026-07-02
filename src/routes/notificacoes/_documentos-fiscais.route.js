@@ -88,8 +88,7 @@ export function documentosFiscaisRoutes(fastify) {
 					'|---|---|---|',
 					'| `telefone` | sim | Telefone do destinatário com DDD (DDI 55 é adicionado se faltar) |',
 					'| `nome` | não | Nome do destinatário (padrão: `Fiscalizado`) |',
-					'| `tipoDocumento` | não | Tipo do documento, ex.: `Auto de Infração` |',
-					'| `numeroDocumento` | não | Número do documento fiscal |',
+					'| `documentos` | não | Array JSON com metadados por arquivo, pareados pelo **nome do arquivo**: `[{"arquivo":"nota.pdf","tipoDocumento":"Auto de Infração","numeroDocumento":"2026/001"}]`. `numeroDocumento` é opcional; arquivo sem entrada usa o tipo padrão |',
 					'| `arquivo` | sim | Um ou mais PDFs (repetir o campo). Máx. 10, 15MB cada |',
 					'',
 					'Validação: cada arquivo precisa ser PDF (mimetype + assinatura `%PDF`).',
@@ -103,7 +102,10 @@ export function documentosFiscaisRoutes(fastify) {
 						'Requisição inválida: arquivo ausente/não-PDF, telefone ausente ou número sem WhatsApp'
 					),
 					401: ErroSchema.describe('API key inválida ou ausente'),
-					500: ErroSchema.describe('Falha ao enviar pela Evolution API')
+					500: ErroSchema.describe('Falha ao enviar pela Evolution API'),
+					503: ErroSchema.describe(
+						'WhatsApp não configurado ou instância desconectada'
+					)
 				}
 			}
 		},
@@ -130,8 +132,7 @@ export function documentosFiscaisRoutes(fastify) {
 					'|---|---|---|',
 					'| `email` | sim | Email do destinatário |',
 					'| `nome` | não | Nome do destinatário (padrão: `Fiscalizado`) |',
-					'| `tipoDocumento` | não | Tipo do documento, ex.: `Auto de Infração` |',
-					'| `numeroDocumento` | não | Número do documento fiscal |',
+					'| `documentos` | não | Array JSON com metadados por arquivo, pareados pelo **nome do arquivo**: `[{"arquivo":"nota.pdf","tipoDocumento":"Auto de Infração","numeroDocumento":"2026/001"}]`. `numeroDocumento` é opcional; arquivo sem entrada usa o tipo padrão |',
 					'| `arquivo` | sim | Um ou mais PDFs (repetir o campo). Máx. 10, 15MB cada |',
 					'',
 					'Validação: cada arquivo precisa ser PDF (mimetype + assinatura `%PDF`).',
