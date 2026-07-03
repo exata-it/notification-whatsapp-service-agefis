@@ -257,14 +257,14 @@ function documentosFiscaisController() {
 
 		try {
 			const listaDocs = documentos
-				.map(d => `• *${d.tipo}*${d.numero ? ` - Nº ${d.numero}` : ''}`)
+				.map((d, i) => `• *${nomeDocumento(d, i)}*`)
 				.join('\n')
 			const mensagemInicial =
 				`🏛️ *AGEFIS - Agência de Fiscalização*\n\n` +
 				`Olá, *${nome}*!\n\n` +
 				(total > 1
 					? `Foram emitidos os seguintes documentos relacionados à fiscalização realizada:\n\n${listaDocs}\n\n`
-					: `Foi emitido um *${documentos[0].tipo}*${documentos[0].numero ? ` - Nº ${documentos[0].numero}` : ''} relacionado à fiscalização realizada.\n\n`) +
+					: `Foi emitido um *${nomeDocumento(documentos[0], 0)}* relacionado à fiscalização realizada.\n\n`) +
 				`📎 ${total > 1 ? `${total} documentos serão enviados` : 'O documento será enviado'} a seguir. Por favor, aguarde...`
 
 			let tStep = Date.now()
@@ -275,8 +275,7 @@ function documentosFiscaisController() {
 			)
 
 			for (let i = 0; i < total; i++) {
-				const { file, tipo, numero } = documentos[i]
-				const numeroTexto = numero ? ` - Nº ${numero}` : ''
+				const { file } = documentos[i]
 				const indice = total > 1 ? ` (${i + 1}/${total})` : ''
 				const fileName = nomeDocumento(documentos[i], i)
 
@@ -293,7 +292,7 @@ function documentosFiscaisController() {
 					number: numeroFormatado,
 					media: file.buffer.toString('base64'),
 					fileName,
-					caption: `📄 *${tipo}*${numeroTexto}${indice}\n\n`,
+					caption: `📄 *${fileName}*${indice}\n\n`,
 					mediatype: 'document',
 					mimetype: 'application/pdf'
 				})
