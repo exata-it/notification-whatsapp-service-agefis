@@ -108,6 +108,17 @@ function nomeArquivoSeguro(base) {
 }
 
 /**
+ * Nome final do documento: "{tipo} Nº {numero} - {arquivo original}".
+ */
+function nomeDocumento({ file, tipo, numero }, i) {
+	const numeroTexto = numero ? ` Nº ${numero}` : ''
+	const base = file.filename
+		? `${tipo}${numeroTexto} - ${file.filename.replace(/\.pdf$/i, '')}`
+		: `${tipo}${numeroTexto} ${i + 1}`
+	return nomeArquivoSeguro(base)
+}
+
+/**
  * Resumo seguro dos arquivos para log (sem despejar o buffer).
  */
 function resumoArquivos(files = []) {
@@ -267,8 +278,7 @@ function documentosFiscaisController() {
 				const { file, tipo, numero } = documentos[i]
 				const numeroTexto = numero ? ` - Nº ${numero}` : ''
 				const indice = total > 1 ? ` (${i + 1}/${total})` : ''
-				const fileName =
-					file.filename || nomeArquivoSeguro(`${tipo}${numeroTexto} ${i + 1}`)
+				const fileName = nomeDocumento(documentos[i], i)
 
 				tStep = Date.now()
 				log.info(
@@ -453,11 +463,9 @@ function documentosFiscaisController() {
 			</div>
 		`
 
-		const attachments = documentos.map(({ file, tipo, numero }, i) => ({
-			filename:
-				file.filename ||
-				nomeArquivoSeguro(`${tipo}${numero ? ` Nº ${numero}` : ''} ${i + 1}`),
-			content: file.buffer,
+		const attachments = documentos.map((doc, i) => ({
+			filename: nomeDocumento(doc, i),
+			content: doc.file.buffer,
 			contentType: 'application/pdf'
 		}))
 
