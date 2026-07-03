@@ -430,10 +430,7 @@ function documentosFiscaisController() {
 
 		const total = documentos.length
 		const itensHtml = documentos
-			.map(
-				d =>
-					`<li><strong>${d.tipo}${d.numero ? ` Nº ${d.numero}` : ''}</strong></li>`
-			)
+			.map((d, i) => `<li><strong>${nomeDocumento(d, i)}</strong></li>`)
 			.join('\n\t\t\t\t\t\t')
 		const htmlBody = `
 			<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
