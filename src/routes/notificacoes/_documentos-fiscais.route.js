@@ -71,7 +71,7 @@ export function documentosFiscaisRoutes(fastify) {
 	fastify.post(
 		'/send-whatsapp',
 		{
-			preValidation: middleware,
+			onRequest: middleware,
 			validatorCompiler: skipBodyValidation,
 			schema: {
 				tags: ['Notificações - Documentos Fiscais'],
@@ -115,7 +115,7 @@ export function documentosFiscaisRoutes(fastify) {
 	fastify.post(
 		'/send-email',
 		{
-			preValidation: middleware,
+			onRequest: middleware,
 			validatorCompiler: skipBodyValidation,
 			schema: {
 				tags: ['Notificações - Documentos Fiscais'],
