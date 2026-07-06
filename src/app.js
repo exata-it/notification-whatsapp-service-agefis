@@ -14,6 +14,7 @@ import { errorHandler, useUtils } from './helpers'
 import { jwtPlugin } from './plugins'
 import {
 	apiKeyModuleRoutes,
+	appUpdatesRoutes,
 	notificacoesRoutes,
 	segurancaRoutes,
 	testeRoutes
@@ -55,6 +56,7 @@ export async function createApp() {
 	// server.register(segurancaRoutes, { prefix: '/api/seguranca' })
 	// server.register(testeRoutes, { prefix: '/api/teste' })
 	server.register(notificacoesRoutes, { prefix: '/api/notificacoes' })
+	server.register(appUpdatesRoutes, { prefix: '/api/app-updates' })
 	// server.register(apiKeyModuleRoutes, { prefix: '/api' })
 
 	// if (settings.NODE_ENV === 'development') {

@@ -390,7 +390,8 @@ export const ModelName = {
   UserRole: 'UserRole',
   UserPermission: 'UserPermission',
   RolePermission: 'RolePermission',
-  Card: 'Card'
+  Card: 'Card',
+  AppRelease: 'AppRelease'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -406,7 +407,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "role" | "permission" | "userRole" | "userPermission" | "rolePermission" | "card"
+    modelProps: "user" | "role" | "permission" | "userRole" | "userPermission" | "rolePermission" | "card" | "appRelease"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -928,6 +929,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    AppRelease: {
+      payload: Prisma.$AppReleasePayload<ExtArgs>
+      fields: Prisma.AppReleaseFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.AppReleaseFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppReleasePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.AppReleaseFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppReleasePayload>
+        }
+        findFirst: {
+          args: Prisma.AppReleaseFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppReleasePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.AppReleaseFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppReleasePayload>
+        }
+        findMany: {
+          args: Prisma.AppReleaseFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppReleasePayload>[]
+        }
+        create: {
+          args: Prisma.AppReleaseCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppReleasePayload>
+        }
+        createMany: {
+          args: Prisma.AppReleaseCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.AppReleaseCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppReleasePayload>[]
+        }
+        delete: {
+          args: Prisma.AppReleaseDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppReleasePayload>
+        }
+        update: {
+          args: Prisma.AppReleaseUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppReleasePayload>
+        }
+        deleteMany: {
+          args: Prisma.AppReleaseDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.AppReleaseUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.AppReleaseUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppReleasePayload>[]
+        }
+        upsert: {
+          args: Prisma.AppReleaseUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AppReleasePayload>
+        }
+        aggregate: {
+          args: Prisma.AppReleaseAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAppRelease>
+        }
+        groupBy: {
+          args: Prisma.AppReleaseGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AppReleaseGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.AppReleaseCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AppReleaseCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1050,6 +1125,24 @@ export const CardScalarFieldEnum = {
 export type CardScalarFieldEnum = (typeof CardScalarFieldEnum)[keyof typeof CardScalarFieldEnum]
 
 
+export const AppReleaseScalarFieldEnum = {
+  id: 'id',
+  platform: 'platform',
+  version: 'version',
+  versionCode: 'versionCode',
+  objectKey: 'objectKey',
+  sha256: 'sha256',
+  size: 'size',
+  force: 'force',
+  active: 'active',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AppReleaseScalarFieldEnum = (typeof AppReleaseScalarFieldEnum)[keyof typeof AppReleaseScalarFieldEnum]
+
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1126,6 +1219,20 @@ export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'In
  * Reference to a field of type 'Int[]'
  */
 export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+/**
+ * Reference to a field of type 'Float'
+ */
+export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
+    
+
+
+/**
+ * Reference to a field of type 'Float[]'
+ */
+export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
     
 
 /**
@@ -1230,6 +1337,7 @@ export type GlobalOmitConfig = {
   userPermission?: Prisma.UserPermissionOmit
   rolePermission?: Prisma.RolePermissionOmit
   card?: Prisma.CardOmit
+  appRelease?: Prisma.AppReleaseOmit
 }
 
 /* Types for Logging */

@@ -34,4 +34,6 @@ ENV NODE_ENV=production \
     TZ=America/Fortaleza
 
 EXPOSE 3000
-CMD ["bun", "run", "src/index.js"]
+# db push antes do start: aplica mudanças aditivas de schema (ex.: app_releases)
+# no deploy. Mudança destrutiva NÃO é aplicada — o boot falha e aparece no log.
+CMD ["sh", "-c", "bun x prisma db push && bun run src/index.js"]

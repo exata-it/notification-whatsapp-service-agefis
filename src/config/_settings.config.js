@@ -34,6 +34,21 @@ const INTERNAL_API_KEYS = (process.env.INTERNAL_API_KEYS || '')
 	.map(k => k.trim())
 	.filter(Boolean)
 
+// MinIO / S3 — artefatos de release do app (auto-update)
+const MINIO_ENDPOINT = process.env.MINIO_URL || process.env.MINIO_ENDPOINT || ''
+// Endpoint usado nas URLs presignadas. Precisa ser alcançável pelo APARELHO
+// (celular não resolve "localhost" do servidor). Default: MINIO_ENDPOINT.
+const MINIO_PUBLIC_ENDPOINT =
+	process.env.MINIO_PUBLIC_ENDPOINT || MINIO_ENDPOINT
+const MINIO_ACCESS_KEY = process.env.MINIO_ACCESS_KEY || ''
+const MINIO_SECRET_KEY = process.env.MINIO_SECRET_KEY || ''
+// Bucket dos APKs de release. Default: bucket geral já configurado.
+const MINIO_RELEASES_BUCKET =
+	process.env.MINIO_RELEASES_BUCKET || process.env.MINIO_BUCKET || 'fiscalize-releases'
+// TTL (segundos) da URL presignada de download do APK
+const APP_UPDATE_URL_TTL =
+	Number.parseInt(process.env.APP_UPDATE_URL_TTL) || 600
+
 // WhatsApp Evolution API
 const WHATSAPP_API_URL = process.env.WHATSAPP_API_URL || ''
 const WHATSAPP_INSTANCE = process.env.WHATSAPP_INSTANCE || ''
@@ -64,6 +79,13 @@ const settings = {
 	DOC_MAX_FILES,
 
 	INTERNAL_API_KEYS,
+
+	MINIO_ENDPOINT,
+	MINIO_PUBLIC_ENDPOINT,
+	MINIO_ACCESS_KEY,
+	MINIO_SECRET_KEY,
+	MINIO_RELEASES_BUCKET,
+	APP_UPDATE_URL_TTL,
 
 	WHATSAPP_API_URL,
 	WHATSAPP_INSTANCE,

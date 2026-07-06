@@ -57,7 +57,8 @@ export const ModelName = {
   UserRole: 'UserRole',
   UserPermission: 'UserPermission',
   RolePermission: 'RolePermission',
-  Card: 'Card'
+  Card: 'Card',
+  AppRelease: 'AppRelease'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -157,6 +158,24 @@ export const CardScalarFieldEnum = {
 } as const
 
 export type CardScalarFieldEnum = (typeof CardScalarFieldEnum)[keyof typeof CardScalarFieldEnum]
+
+
+export const AppReleaseScalarFieldEnum = {
+  id: 'id',
+  platform: 'platform',
+  version: 'version',
+  versionCode: 'versionCode',
+  objectKey: 'objectKey',
+  sha256: 'sha256',
+  size: 'size',
+  force: 'force',
+  active: 'active',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type AppReleaseScalarFieldEnum = (typeof AppReleaseScalarFieldEnum)[keyof typeof AppReleaseScalarFieldEnum]
 
 
 export const SortOrder = {

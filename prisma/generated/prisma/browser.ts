@@ -52,3 +52,8 @@ export type RolePermission = Prisma.RolePermissionModel
  * 
  */
 export type Card = Prisma.CardModel
+/**
+ * Model AppRelease
+ * 
+ */
+export type AppRelease = Prisma.AppReleaseModel
