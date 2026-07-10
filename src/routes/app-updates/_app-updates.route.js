@@ -55,6 +55,39 @@ export function appUpdatesRoutes(fastify) {
 		controller.latest
 	)
 
+	fastify.get(
+		'/download',
+		{
+			schema: {
+				tags: ['App Updates'],
+				summary: 'Página de download do app',
+				description:
+					'Página HTML simples com botão para baixar a última versão ativa do APK.',
+				security: [],
+				hide: true
+			}
+		},
+		controller.downloadPage
+	)
+
+	fastify.get(
+		'/download/apk',
+		{
+			schema: {
+				tags: ['App Updates'],
+				summary: 'Download direto do APK (redirect)',
+				description:
+					'Redireciona (302) para a URL presignada da última release ativa.',
+				security: [],
+				response: {
+					404: ErroSchema.describe('Nenhuma release disponível'),
+					503: ErroSchema.describe('MinIO não configurado no servidor')
+				}
+			}
+		},
+		controller.downloadApk
+	)
+
 	fastify.post(
 		'/',
 		{
