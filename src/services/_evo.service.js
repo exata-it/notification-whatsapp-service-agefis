@@ -12,6 +12,19 @@ const evoClient = axios.create({
 	}
 })
 
+/**
+ * Garante que a Evolution API aceitou o envio (retornou `key.id`).
+ * Sem isso o serviço reportaria sucesso mesmo quando o WhatsApp rejeita.
+ */
+function garantirEnvio(data, contexto) {
+	if (!data?.key?.id) {
+		const err = new Error(`Evolution API não confirmou o envio (${contexto})`)
+		err.evolutionResponse = data
+		throw err
+	}
+	return data
+}
+
 export const evoService = {
 	/**
 	 * Formata número para o padrão WhatsApp (DDI 55 + DDD + número)
@@ -81,7 +94,7 @@ export const evoService = {
 			`/message/sendText/${WHATSAPP_INSTANCE}`,
 			payload
 		)
-		return response.data
+		return garantirEnvio(response.data, `sendText → ${formattedNumber}`)
 	},
 
 	/**
@@ -117,6 +130,6 @@ export const evoService = {
 			`/message/sendMedia/${WHATSAPP_INSTANCE}`,
 			payload
 		)
-		return response.data
+		return garantirEnvio(response.data, `sendMedia → ${formattedNumber}`)
 	}
 }

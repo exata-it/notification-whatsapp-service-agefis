@@ -5,6 +5,39 @@ import {
 	whatsAppFieldsSchema
 } from './_documentos-fiscais.schema.js'
 
+const sleep = ms => new Promise(r => setTimeout(r, ms))
+
+// Espaçamento entre mensagens do mesmo envio — reduz rejeição do WhatsApp
+// (status 0 / stub 463 por flood de mensagens em sequência).
+const INTERVALO_MSG_MS = 2500
+
+// Janela de deduplicação: mesmo telefone + mesmos arquivos dentro dela é
+// tratado como reenvio acidental (double-submit / retry do cliente).
+const JANELA_DEDUP_MS = 30_000
+const enviosEmAndamento = new Map()
+
+function chaveEnvio(telefone, files) {
+	const assinatura = files
+		.map(f => `${f.filename}:${f.buffer.length}`)
+		.sort()
+		.join('|')
+	return `${telefone}::${assinatura}`
+}
+
+/**
+ * Marca um envio como em andamento. Retorna false se já houver um envio
+ * idêntico dentro da janela (duplicado). Limpa entradas expiradas de passagem.
+ */
+function reservarEnvio(chave) {
+	const agora = Date.now()
+	for (const [k, ts] of enviosEmAndamento) {
+		if (agora - ts > JANELA_DEDUP_MS) enviosEmAndamento.delete(k)
+	}
+	if (enviosEmAndamento.has(chave)) return false
+	enviosEmAndamento.set(chave, agora)
+	return true
+}
+
 /**
  * Extrai TODOS os arquivos (PDF) e os campos de texto de uma requisição multipart.
  * Lê fields e files na ordem em que chegam (busboy).
@@ -214,6 +247,16 @@ function documentosFiscaisController() {
 			'Documento Fiscal'
 		)
 
+		const chave = chaveEnvio(telefone, parsed.files)
+		if (!reservarEnvio(chave)) {
+			log.warn({ chave }, '[whatsapp] envio duplicado ignorado → 409')
+			return reply.code(409).send({
+				success: false,
+				error:
+					'Envio idêntico já em andamento ou concluído há instantes. Aguarde antes de reenviar.'
+			})
+		}
+
 		const numeroFormatado = evoService.formatNumber(telefone)
 		log.info(
 			{ telefone_original: telefone, numero_formatado: numeroFormatado, nome },
@@ -228,6 +271,7 @@ function documentosFiscaisController() {
 				'[whatsapp] validação de número (Evolution)'
 			)
 			if (!numeroValido) {
+				enviosEmAndamento.delete(chave)
 				return reply.code(400).send({
 					success: false,
 					error: `Número ${numeroFormatado} não possui WhatsApp ativo`
@@ -237,6 +281,7 @@ function documentosFiscaisController() {
 			const erroEvo = err.response?.data?.output?.payload?.message
 			const semResposta = !err.response
 			if (erroEvo === 'Connection Closed' || semResposta) {
+				enviosEmAndamento.delete(chave)
 				log.error(
 					{ erro: erroEvo || err.message },
 					'[whatsapp] instância desconectada/indisponível → 503'
@@ -279,6 +324,8 @@ function documentosFiscaisController() {
 				const indice = total > 1 ? ` (${i + 1}/${total})` : ''
 				const fileName = nomeDocumento(documentos[i], i)
 
+				await sleep(INTERVALO_MSG_MS)
+
 				tStep = Date.now()
 				log.info(
 					{
@@ -301,6 +348,8 @@ function documentosFiscaisController() {
 					'[whatsapp] mídia enviada'
 				)
 			}
+
+			await sleep(INTERVALO_MSG_MS)
 
 			const mensagemFinal =
 				`✅ *Envio concluído!*\n\n` +
@@ -328,12 +377,13 @@ function documentosFiscaisController() {
 				}
 			})
 		} catch (error) {
+			enviosEmAndamento.delete(chave)
 			log.error(
 				{
 					erro: error.message,
 					codigo: error.code,
 					status_evo: error.response?.status,
-					resposta_evo: error.response?.data,
+					resposta_evo: error.response?.data ?? error.evolutionResponse,
 					ms_total: Date.now() - t0
 				},
 				'[whatsapp] erro ao enviar → 500'
