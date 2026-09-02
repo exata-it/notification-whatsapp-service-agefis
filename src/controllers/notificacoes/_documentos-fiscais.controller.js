@@ -253,7 +253,7 @@ function documentosFiscaisController() {
 			return reply.code(409).send({
 				success: false,
 				error:
-					'Envio idêntico já em andamento ou concluído há instantes. Aguarde antes de reenviar.'
+					`Envio idêntico já em andamento ou concluído há instantes. Aguarde ${JANELA_DEDUP_MS / 1000} segundos antes de reenviar o mesmo conteúdo.`
 			})
 		}
 
