@@ -252,8 +252,7 @@ function documentosFiscaisController() {
 			log.warn({ chave }, '[whatsapp] envio duplicado ignorado → 409')
 			return reply.code(409).send({
 				success: false,
-				error:
-					`Envio idêntico já em andamento ou concluído há instantes. Aguarde ${JANELA_DEDUP_MS / 1000} segundos antes de reenviar o mesmo conteúdo.`
+				error: `Envio idêntico já em andamento ou concluído há instantes. Aguarde ${JANELA_DEDUP_MS / 1000} segundos antes de reenviar o mesmo conteúdo.`
 			})
 		}
 
