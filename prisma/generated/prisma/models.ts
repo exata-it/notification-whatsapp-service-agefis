@@ -8,12 +8,5 @@
  *
  * 🟢 You can import this file directly.
  */
-export type * from './models/User'
-export type * from './models/Role'
-export type * from './models/Permission'
-export type * from './models/UserRole'
-export type * from './models/UserPermission'
-export type * from './models/RolePermission'
-export type * from './models/Card'
 export type * from './models/AppRelease'
 export type * from './commonInputTypes'

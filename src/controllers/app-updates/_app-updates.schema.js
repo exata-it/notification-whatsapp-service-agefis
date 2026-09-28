@@ -7,6 +7,10 @@ const platformSchema = z
 	.enum(['android'])
 	.describe('Plataforma do release (hoje apenas android)')
 
+export const channelSchema = z
+	.enum(['qa', 'prod'])
+	.describe('Canal do build: qa (API de homologação) ou prod')
+
 const versionSchema = z
 	.string()
 	.regex(SEMVER_REGEX, 'Versão deve ser semver (ex.: 0.4.0)')
@@ -25,6 +29,9 @@ export function versionToCode(version) {
 
 export const latestQuerySchema = z.object({
 	platform: platformSchema.default('android'),
+	// Default prod: apps instalados antes da separação não mandam canal e
+	// migram para produção pelo próprio auto-update (mesmo applicationId).
+	channel: channelSchema.default('prod'),
 	current: versionSchema
 		.optional()
 		.describe('Versão instalada no aparelho. Ausente = sempre retorna latest')
@@ -46,11 +53,14 @@ export const manifestSchema = z
 
 export const createReleaseBodySchema = z.object({
 	platform: platformSchema.default('android'),
+	channel: channelSchema,
 	version: versionSchema,
 	objectKey: z
 		.string()
 		.min(1)
-		.describe('Chave do objeto no bucket (ex.: android/0.4.0/app-arm64.apk)'),
+		.describe(
+			'Chave do objeto no bucket (ex.: android/prod/0.4.0/app-arm64.apk)'
+		),
 	sha256: z
 		.string()
 		.regex(SHA256_REGEX, 'sha256 deve ser hex de 64 caracteres')
@@ -79,6 +89,7 @@ export const releaseEntitySchema = z
 	.object({
 		id: z.string().describe('ID do release (UUID v7)'),
 		platform: platformSchema,
+		channel: channelSchema,
 		version: versionSchema,
 		versionCode: z.number().int(),
 		objectKey: z.string(),
@@ -92,6 +103,11 @@ export const releaseEntitySchema = z
 	})
 	.describe('Release registrado')
 
+export const downloadQuerySchema = z.object({
+	channel: channelSchema.default('prod')
+})
+
 export const listQuerySchema = z.object({
-	platform: platformSchema.optional()
+	platform: platformSchema.optional(),
+	channel: channelSchema.optional()
 })

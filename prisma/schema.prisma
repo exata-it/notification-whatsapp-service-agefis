@@ -13,6 +13,9 @@ datasource db {
 model AppRelease {
   id          String   @id @default(uuid(7))
   platform    String
+  // qa | prod — builds distintos (API e applicationId diferentes). Default qa
+  // porque as releases anteriores à separação eram todas contra a API de QA.
+  channel     String   @default("qa")
   version     String
   // Derivado da versão (major*1e6 + minor*1e3 + patch) — mesma fórmula do
   // versionCode que o Tauri gera para o Android. Ordenação de releases.
@@ -28,7 +31,7 @@ model AppRelease {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  @@unique([platform, version])
+  @@unique([platform, channel, version])
   @@index([platform, active, versionCode])
   @@map("app_releases")
   @@schema("public")

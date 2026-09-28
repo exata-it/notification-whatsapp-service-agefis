@@ -1,6 +1,7 @@
 import {
 	appUpdatesController,
 	createReleaseBodySchema,
+	downloadQuerySchema,
 	latestQuerySchema,
 	listQuerySchema,
 	manifestSchema,
@@ -34,6 +35,8 @@ export function appUpdatesRoutes(fastify) {
 					'Retorna o manifest da última release **ativa** da plataforma, com URL',
 					'presignada de download do APK no MinIO (TTL curto).',
 					'',
+					'Filtra por `channel` (qa|prod; default prod — apps antigos não enviam).',
+					'',
 					'Responde **204 (sem corpo)** quando `current` já é a última versão',
 					'ou quando não há release registrada.',
 					'',
@@ -62,7 +65,7 @@ export function appUpdatesRoutes(fastify) {
 				tags: ['App Updates'],
 				summary: 'Página de download do app',
 				description:
-					'Página HTML simples com botão para baixar a última versão ativa do APK.',
+					'Página HTML com a última versão ativa de cada canal (produção e QA).',
 				security: [],
 				hide: true
 			}
@@ -77,8 +80,9 @@ export function appUpdatesRoutes(fastify) {
 				tags: ['App Updates'],
 				summary: 'Download direto do APK (redirect)',
 				description:
-					'Redireciona (302) para a URL presignada da última release ativa.',
+					'Redireciona (302) para a URL presignada da última release ativa do canal (default prod).',
 				security: [],
+				querystring: downloadQuerySchema,
 				response: {
 					404: ErroSchema.describe('Nenhuma release disponível'),
 					503: ErroSchema.describe('MinIO não configurado no servidor')
@@ -103,7 +107,7 @@ export function appUpdatesRoutes(fastify) {
 					'`versionCode` é derivado da versão (major×10⁶ + minor×10³ + patch —',
 					'mesma fórmula do Tauri).',
 					'',
-					'Upsert por `(platform, version)`: reexecutar o pipeline da mesma tag',
+					'Upsert por `(platform, channel, version)`: reexecutar o pipeline da mesma tag',
 					'atualiza o registro em vez de falhar.'
 				].join('\n'),
 				security: [{ ApiKeyAuth: [] }],

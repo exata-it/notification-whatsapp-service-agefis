@@ -39,6 +39,7 @@ export type AppReleaseSumAggregateOutputType = {
 export type AppReleaseMinAggregateOutputType = {
   id: string | null
   platform: string | null
+  channel: string | null
   version: string | null
   versionCode: number | null
   objectKey: string | null
@@ -54,6 +55,7 @@ export type AppReleaseMinAggregateOutputType = {
 export type AppReleaseMaxAggregateOutputType = {
   id: string | null
   platform: string | null
+  channel: string | null
   version: string | null
   versionCode: number | null
   objectKey: string | null
@@ -69,6 +71,7 @@ export type AppReleaseMaxAggregateOutputType = {
 export type AppReleaseCountAggregateOutputType = {
   id: number
   platform: number
+  channel: number
   version: number
   versionCode: number
   objectKey: number
@@ -96,6 +99,7 @@ export type AppReleaseSumAggregateInputType = {
 export type AppReleaseMinAggregateInputType = {
   id?: true
   platform?: true
+  channel?: true
   version?: true
   versionCode?: true
   objectKey?: true
@@ -111,6 +115,7 @@ export type AppReleaseMinAggregateInputType = {
 export type AppReleaseMaxAggregateInputType = {
   id?: true
   platform?: true
+  channel?: true
   version?: true
   versionCode?: true
   objectKey?: true
@@ -126,6 +131,7 @@ export type AppReleaseMaxAggregateInputType = {
 export type AppReleaseCountAggregateInputType = {
   id?: true
   platform?: true
+  channel?: true
   version?: true
   versionCode?: true
   objectKey?: true
@@ -228,6 +234,7 @@ export type AppReleaseGroupByArgs<ExtArgs extends runtime.Types.Extensions.Inter
 export type AppReleaseGroupByOutputType = {
   id: string
   platform: string
+  channel: string
   version: string
   versionCode: number
   objectKey: string
@@ -266,6 +273,7 @@ export type AppReleaseWhereInput = {
   NOT?: Prisma.AppReleaseWhereInput | Prisma.AppReleaseWhereInput[]
   id?: Prisma.StringFilter<"AppRelease"> | string
   platform?: Prisma.StringFilter<"AppRelease"> | string
+  channel?: Prisma.StringFilter<"AppRelease"> | string
   version?: Prisma.StringFilter<"AppRelease"> | string
   versionCode?: Prisma.IntFilter<"AppRelease"> | number
   objectKey?: Prisma.StringFilter<"AppRelease"> | string
@@ -281,6 +289,7 @@ export type AppReleaseWhereInput = {
 export type AppReleaseOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   platform?: Prisma.SortOrder
+  channel?: Prisma.SortOrder
   version?: Prisma.SortOrder
   versionCode?: Prisma.SortOrder
   objectKey?: Prisma.SortOrder
@@ -295,11 +304,12 @@ export type AppReleaseOrderByWithRelationInput = {
 
 export type AppReleaseWhereUniqueInput = Prisma.AtLeast<{
   id?: string
-  platform_version?: Prisma.AppReleasePlatformVersionCompoundUniqueInput
+  platform_channel_version?: Prisma.AppReleasePlatformChannelVersionCompoundUniqueInput
   AND?: Prisma.AppReleaseWhereInput | Prisma.AppReleaseWhereInput[]
   OR?: Prisma.AppReleaseWhereInput[]
   NOT?: Prisma.AppReleaseWhereInput | Prisma.AppReleaseWhereInput[]
   platform?: Prisma.StringFilter<"AppRelease"> | string
+  channel?: Prisma.StringFilter<"AppRelease"> | string
   version?: Prisma.StringFilter<"AppRelease"> | string
   versionCode?: Prisma.IntFilter<"AppRelease"> | number
   objectKey?: Prisma.StringFilter<"AppRelease"> | string
@@ -310,11 +320,12 @@ export type AppReleaseWhereUniqueInput = Prisma.AtLeast<{
   notes?: Prisma.StringNullableFilter<"AppRelease"> | string | null
   createdAt?: Prisma.DateTimeFilter<"AppRelease"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"AppRelease"> | Date | string
-}, "id" | "platform_version">
+}, "id" | "platform_channel_version">
 
 export type AppReleaseOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   platform?: Prisma.SortOrder
+  channel?: Prisma.SortOrder
   version?: Prisma.SortOrder
   versionCode?: Prisma.SortOrder
   objectKey?: Prisma.SortOrder
@@ -338,6 +349,7 @@ export type AppReleaseScalarWhereWithAggregatesInput = {
   NOT?: Prisma.AppReleaseScalarWhereWithAggregatesInput | Prisma.AppReleaseScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"AppRelease"> | string
   platform?: Prisma.StringWithAggregatesFilter<"AppRelease"> | string
+  channel?: Prisma.StringWithAggregatesFilter<"AppRelease"> | string
   version?: Prisma.StringWithAggregatesFilter<"AppRelease"> | string
   versionCode?: Prisma.IntWithAggregatesFilter<"AppRelease"> | number
   objectKey?: Prisma.StringWithAggregatesFilter<"AppRelease"> | string
@@ -353,6 +365,7 @@ export type AppReleaseScalarWhereWithAggregatesInput = {
 export type AppReleaseCreateInput = {
   id?: string
   platform: string
+  channel?: string
   version: string
   versionCode: number
   objectKey: string
@@ -368,6 +381,7 @@ export type AppReleaseCreateInput = {
 export type AppReleaseUncheckedCreateInput = {
   id?: string
   platform: string
+  channel?: string
   version: string
   versionCode: number
   objectKey: string
@@ -383,6 +397,7 @@ export type AppReleaseUncheckedCreateInput = {
 export type AppReleaseUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   platform?: Prisma.StringFieldUpdateOperationsInput | string
+  channel?: Prisma.StringFieldUpdateOperationsInput | string
   version?: Prisma.StringFieldUpdateOperationsInput | string
   versionCode?: Prisma.IntFieldUpdateOperationsInput | number
   objectKey?: Prisma.StringFieldUpdateOperationsInput | string
@@ -398,6 +413,7 @@ export type AppReleaseUpdateInput = {
 export type AppReleaseUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   platform?: Prisma.StringFieldUpdateOperationsInput | string
+  channel?: Prisma.StringFieldUpdateOperationsInput | string
   version?: Prisma.StringFieldUpdateOperationsInput | string
   versionCode?: Prisma.IntFieldUpdateOperationsInput | number
   objectKey?: Prisma.StringFieldUpdateOperationsInput | string
@@ -413,6 +429,7 @@ export type AppReleaseUncheckedUpdateInput = {
 export type AppReleaseCreateManyInput = {
   id?: string
   platform: string
+  channel?: string
   version: string
   versionCode: number
   objectKey: string
@@ -428,6 +445,7 @@ export type AppReleaseCreateManyInput = {
 export type AppReleaseUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   platform?: Prisma.StringFieldUpdateOperationsInput | string
+  channel?: Prisma.StringFieldUpdateOperationsInput | string
   version?: Prisma.StringFieldUpdateOperationsInput | string
   versionCode?: Prisma.IntFieldUpdateOperationsInput | number
   objectKey?: Prisma.StringFieldUpdateOperationsInput | string
@@ -443,6 +461,7 @@ export type AppReleaseUpdateManyMutationInput = {
 export type AppReleaseUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   platform?: Prisma.StringFieldUpdateOperationsInput | string
+  channel?: Prisma.StringFieldUpdateOperationsInput | string
   version?: Prisma.StringFieldUpdateOperationsInput | string
   versionCode?: Prisma.IntFieldUpdateOperationsInput | number
   objectKey?: Prisma.StringFieldUpdateOperationsInput | string
@@ -455,14 +474,16 @@ export type AppReleaseUncheckedUpdateManyInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
-export type AppReleasePlatformVersionCompoundUniqueInput = {
+export type AppReleasePlatformChannelVersionCompoundUniqueInput = {
   platform: string
+  channel: string
   version: string
 }
 
 export type AppReleaseCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   platform?: Prisma.SortOrder
+  channel?: Prisma.SortOrder
   version?: Prisma.SortOrder
   versionCode?: Prisma.SortOrder
   objectKey?: Prisma.SortOrder
@@ -483,6 +504,7 @@ export type AppReleaseAvgOrderByAggregateInput = {
 export type AppReleaseMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   platform?: Prisma.SortOrder
+  channel?: Prisma.SortOrder
   version?: Prisma.SortOrder
   versionCode?: Prisma.SortOrder
   objectKey?: Prisma.SortOrder
@@ -498,6 +520,7 @@ export type AppReleaseMaxOrderByAggregateInput = {
 export type AppReleaseMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   platform?: Prisma.SortOrder
+  channel?: Prisma.SortOrder
   version?: Prisma.SortOrder
   versionCode?: Prisma.SortOrder
   objectKey?: Prisma.SortOrder
@@ -515,6 +538,10 @@ export type AppReleaseSumOrderByAggregateInput = {
   size?: Prisma.SortOrder
 }
 
+export type StringFieldUpdateOperationsInput = {
+  set?: string
+}
+
 export type IntFieldUpdateOperationsInput = {
   set?: number
   increment?: number
@@ -523,11 +550,24 @@ export type IntFieldUpdateOperationsInput = {
   divide?: number
 }
 
+export type BoolFieldUpdateOperationsInput = {
+  set?: boolean
+}
+
+export type NullableStringFieldUpdateOperationsInput = {
+  set?: string | null
+}
+
+export type DateTimeFieldUpdateOperationsInput = {
+  set?: Date | string
+}
+
 
 
 export type AppReleaseSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   platform?: boolean
+  channel?: boolean
   version?: boolean
   versionCode?: boolean
   objectKey?: boolean
@@ -543,6 +583,7 @@ export type AppReleaseSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
 export type AppReleaseSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   platform?: boolean
+  channel?: boolean
   version?: boolean
   versionCode?: boolean
   objectKey?: boolean
@@ -558,6 +599,7 @@ export type AppReleaseSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
 export type AppReleaseSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   platform?: boolean
+  channel?: boolean
   version?: boolean
   versionCode?: boolean
   objectKey?: boolean
@@ -573,6 +615,7 @@ export type AppReleaseSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
 export type AppReleaseSelectScalar = {
   id?: boolean
   platform?: boolean
+  channel?: boolean
   version?: boolean
   versionCode?: boolean
   objectKey?: boolean
@@ -585,7 +628,7 @@ export type AppReleaseSelectScalar = {
   updatedAt?: boolean
 }
 
-export type AppReleaseOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "platform" | "version" | "versionCode" | "objectKey" | "sha256" | "size" | "force" | "active" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["appRelease"]>
+export type AppReleaseOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "platform" | "channel" | "version" | "versionCode" | "objectKey" | "sha256" | "size" | "force" | "active" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["appRelease"]>
 
 export type $AppReleasePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "AppRelease"
@@ -593,6 +636,7 @@ export type $AppReleasePayload<ExtArgs extends runtime.Types.Extensions.Internal
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     platform: string
+    channel: string
     version: string
     versionCode: number
     objectKey: string
@@ -1028,6 +1072,7 @@ export interface Prisma__AppReleaseClient<T, Null = never, ExtArgs extends runti
 export interface AppReleaseFieldRefs {
   readonly id: Prisma.FieldRef<"AppRelease", 'String'>
   readonly platform: Prisma.FieldRef<"AppRelease", 'String'>
+  readonly channel: Prisma.FieldRef<"AppRelease", 'String'>
   readonly version: Prisma.FieldRef<"AppRelease", 'String'>
   readonly versionCode: Prisma.FieldRef<"AppRelease", 'Int'>
   readonly objectKey: Prisma.FieldRef<"AppRelease", 'String'>

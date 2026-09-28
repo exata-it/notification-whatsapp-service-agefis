@@ -20,7 +20,7 @@ const config: runtime.GetPrismaClientConfig = {
   "clientVersion": "7.2.0",
   "engineVersion": "0c8ef2ce45c83248ab3df073180d5eda9e8be7a3",
   "activeProvider": "postgresql",
-  "inlineSchema": "generator client {\n  provider   = \"prisma-client\"\n  output     = \"./generated/prisma\"\n  engineType = \"client\"\n  runtime    = \"bun\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  schemas  = [\"seguranca\", \"public\"]\n}\n\nmodel User {\n  id            String   @id @default(uuid(7))\n  email         String   @unique\n  login         String   @unique @db.VarChar(90)\n  password_hash String\n  name          String   @db.VarChar(90)\n  active        Boolean  @default(true)\n  createdAt     DateTime @default(now())\n  updatedAt     DateTime @updatedAt\n\n  userRoles       UserRole[]\n  userPermissions UserPermission[]\n\n  @@map(\"users\")\n  @@schema(\"seguranca\")\n}\n\nmodel Role {\n  id        String   @id @default(uuid(7))\n  name      String   @unique\n  active    Boolean  @default(true)\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n\n  userRoles       UserRole[]\n  rolePermissions RolePermission[]\n\n  @@map(\"roles\")\n  @@schema(\"seguranca\")\n}\n\nmodel Permission {\n  id          String   @id @default(uuid(7))\n  identifier  String   @unique\n  name        String\n  description String?\n  category    String\n  active      Boolean  @default(true)\n  createdAt   DateTime @default(now())\n\n  userPermissions UserPermission[]\n  rolePermissions RolePermission[]\n\n  @@map(\"permissions\")\n  @@schema(\"seguranca\")\n}\n\nmodel UserRole {\n  id         String    @id @default(uuid(7))\n  userId     String\n  roleId     String\n  assignedAt DateTime  @default(now())\n  assignedBy String?\n  expiresAt  DateTime?\n\n  user User @relation(fields: [userId], references: [id], onDelete: Cascade)\n  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)\n\n  @@unique([userId, roleId])\n  @@index([userId])\n  @@index([roleId])\n  @@map(\"user_roles\")\n  @@schema(\"seguranca\")\n}\n\nmodel UserPermission {\n  id           String    @id @default(uuid(7))\n  userId       String\n  permissionId String\n  grantedAt    DateTime  @default(now())\n  grantedBy    String?\n  expiresAt    DateTime?\n\n  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)\n  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)\n\n  @@unique([userId, permissionId])\n  @@index([userId])\n  @@index([permissionId])\n  @@map(\"user_permissions\")\n  @@schema(\"seguranca\")\n}\n\nmodel RolePermission {\n  id           String   @id @default(uuid(7))\n  roleId       String\n  permissionId String\n  grantedAt    DateTime @default(now())\n\n  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)\n  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)\n\n  @@unique([roleId, permissionId])\n  @@index([roleId])\n  @@index([permissionId])\n  @@map(\"role_permissions\")\n  @@schema(\"seguranca\")\n}\n\nmodel Card {\n  id          String   @id @default(uuid(7))\n  title       String\n  description String?\n  createdAt   DateTime @default(now())\n  updatedAt   DateTime @updatedAt\n\n  @@map(\"cards\")\n  @@schema(\"public\")\n}\n\nmodel AppRelease {\n  id          String   @id @default(uuid(7))\n  platform    String\n  version     String\n  // Derivado da versão (major*1e6 + minor*1e3 + patch) — mesma fórmula do\n  // versionCode que o Tauri gera para o Android. Ordenação de releases.\n  versionCode Int\n  // Chave do objeto no bucket MinIO (ex.: android/0.4.0/app-arm64.apk)\n  objectKey   String\n  sha256      String\n  size        Int\n  force       Boolean  @default(false)\n  // Rollback: desativar release ruim faz o /latest voltar à anterior\n  active      Boolean  @default(true)\n  notes       String?\n  createdAt   DateTime @default(now())\n  updatedAt   DateTime @updatedAt\n\n  @@unique([platform, version])\n  @@index([platform, active, versionCode])\n  @@map(\"app_releases\")\n  @@schema(\"public\")\n}\n",
+  "inlineSchema": "generator client {\n  provider   = \"prisma-client\"\n  output     = \"./generated/prisma\"\n  engineType = \"client\"\n  runtime    = \"bun\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  schemas  = [\"public\"]\n}\n\nmodel AppRelease {\n  id          String   @id @default(uuid(7))\n  platform    String\n  // qa | prod — builds distintos (API e applicationId diferentes). Default qa\n  // porque as releases anteriores à separação eram todas contra a API de QA.\n  channel     String   @default(\"qa\")\n  version     String\n  // Derivado da versão (major*1e6 + minor*1e3 + patch) — mesma fórmula do\n  // versionCode que o Tauri gera para o Android. Ordenação de releases.\n  versionCode Int\n  // Chave do objeto no bucket MinIO (ex.: android/0.4.0/app-arm64.apk)\n  objectKey   String\n  sha256      String\n  size        Int\n  force       Boolean  @default(false)\n  // Rollback: desativar release ruim faz o /latest voltar à anterior\n  active      Boolean  @default(true)\n  notes       String?\n  createdAt   DateTime @default(now())\n  updatedAt   DateTime @updatedAt\n\n  @@unique([platform, channel, version])\n  @@index([platform, active, versionCode])\n  @@map(\"app_releases\")\n  @@schema(\"public\")\n}\n",
   "runtimeDataModel": {
     "models": {},
     "enums": {},
@@ -28,7 +28,7 @@ const config: runtime.GetPrismaClientConfig = {
   }
 }
 
-config.runtimeDataModel = JSON.parse("{\"models\":{\"User\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"login\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"password_hash\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"active\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"userRoles\",\"kind\":\"object\",\"type\":\"UserRole\",\"relationName\":\"UserToUserRole\"},{\"name\":\"userPermissions\",\"kind\":\"object\",\"type\":\"UserPermission\",\"relationName\":\"UserToUserPermission\"}],\"dbName\":\"users\"},\"Role\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"active\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"userRoles\",\"kind\":\"object\",\"type\":\"UserRole\",\"relationName\":\"RoleToUserRole\"},{\"name\":\"rolePermissions\",\"kind\":\"object\",\"type\":\"RolePermission\",\"relationName\":\"RoleToRolePermission\"}],\"dbName\":\"roles\"},\"Permission\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"identifier\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"description\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"category\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"active\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"userPermissions\",\"kind\":\"object\",\"type\":\"UserPermission\",\"relationName\":\"PermissionToUserPermission\"},{\"name\":\"rolePermissions\",\"kind\":\"object\",\"type\":\"RolePermission\",\"relationName\":\"PermissionToRolePermission\"}],\"dbName\":\"permissions\"},\"UserRole\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"roleId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"assignedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"assignedBy\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"expiresAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"UserToUserRole\"},{\"name\":\"role\",\"kind\":\"object\",\"type\":\"Role\",\"relationName\":\"RoleToUserRole\"}],\"dbName\":\"user_roles\"},\"UserPermission\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"permissionId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"grantedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"grantedBy\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"expiresAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"UserToUserPermission\"},{\"name\":\"permission\",\"kind\":\"object\",\"type\":\"Permission\",\"relationName\":\"PermissionToUserPermission\"}],\"dbName\":\"user_permissions\"},\"RolePermission\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"roleId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"permissionId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"grantedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"role\",\"kind\":\"object\",\"type\":\"Role\",\"relationName\":\"RoleToRolePermission\"},{\"name\":\"permission\",\"kind\":\"object\",\"type\":\"Permission\",\"relationName\":\"PermissionToRolePermission\"}],\"dbName\":\"role_permissions\"},\"Card\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"title\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"description\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":\"cards\"},\"AppRelease\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"platform\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"version\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"versionCode\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"objectKey\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"sha256\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"size\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"force\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"active\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"notes\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":\"app_releases\"}},\"enums\":{},\"types\":{}}")
+config.runtimeDataModel = JSON.parse("{\"models\":{\"AppRelease\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"platform\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"channel\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"version\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"versionCode\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"objectKey\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"sha256\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"size\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"force\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"active\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"notes\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":\"app_releases\"}},\"enums\":{},\"types\":{}}")
 
 async function decodeBase64AsWasm(wasmBase64: string): Promise<WebAssembly.Module> {
   const { Buffer } = await import('node:buffer')
@@ -58,8 +58,8 @@ export interface PrismaClientConstructor {
    * @example
    * ```
    * const prisma = new PrismaClient()
-   * // Fetch zero or more Users
-   * const users = await prisma.user.findMany()
+   * // Fetch zero or more AppReleases
+   * const appReleases = await prisma.appRelease.findMany()
    * ```
    * 
    * Read more in our [docs](https://pris.ly/d/client).
@@ -80,8 +80,8 @@ export interface PrismaClientConstructor {
  * @example
  * ```
  * const prisma = new PrismaClient()
- * // Fetch zero or more Users
- * const users = await prisma.user.findMany()
+ * // Fetch zero or more AppReleases
+ * const appReleases = await prisma.appRelease.findMany()
  * ```
  * 
  * Read more in our [docs](https://pris.ly/d/client).
@@ -175,76 +175,6 @@ export interface PrismaClient<
   }>>
 
       /**
-   * `prisma.user`: Exposes CRUD operations for the **User** model.
-    * Example usage:
-    * ```ts
-    * // Fetch zero or more Users
-    * const users = await prisma.user.findMany()
-    * ```
-    */
-  get user(): Prisma.UserDelegate<ExtArgs, { omit: OmitOpts }>;
-
-  /**
-   * `prisma.role`: Exposes CRUD operations for the **Role** model.
-    * Example usage:
-    * ```ts
-    * // Fetch zero or more Roles
-    * const roles = await prisma.role.findMany()
-    * ```
-    */
-  get role(): Prisma.RoleDelegate<ExtArgs, { omit: OmitOpts }>;
-
-  /**
-   * `prisma.permission`: Exposes CRUD operations for the **Permission** model.
-    * Example usage:
-    * ```ts
-    * // Fetch zero or more Permissions
-    * const permissions = await prisma.permission.findMany()
-    * ```
-    */
-  get permission(): Prisma.PermissionDelegate<ExtArgs, { omit: OmitOpts }>;
-
-  /**
-   * `prisma.userRole`: Exposes CRUD operations for the **UserRole** model.
-    * Example usage:
-    * ```ts
-    * // Fetch zero or more UserRoles
-    * const userRoles = await prisma.userRole.findMany()
-    * ```
-    */
-  get userRole(): Prisma.UserRoleDelegate<ExtArgs, { omit: OmitOpts }>;
-
-  /**
-   * `prisma.userPermission`: Exposes CRUD operations for the **UserPermission** model.
-    * Example usage:
-    * ```ts
-    * // Fetch zero or more UserPermissions
-    * const userPermissions = await prisma.userPermission.findMany()
-    * ```
-    */
-  get userPermission(): Prisma.UserPermissionDelegate<ExtArgs, { omit: OmitOpts }>;
-
-  /**
-   * `prisma.rolePermission`: Exposes CRUD operations for the **RolePermission** model.
-    * Example usage:
-    * ```ts
-    * // Fetch zero or more RolePermissions
-    * const rolePermissions = await prisma.rolePermission.findMany()
-    * ```
-    */
-  get rolePermission(): Prisma.RolePermissionDelegate<ExtArgs, { omit: OmitOpts }>;
-
-  /**
-   * `prisma.card`: Exposes CRUD operations for the **Card** model.
-    * Example usage:
-    * ```ts
-    * // Fetch zero or more Cards
-    * const cards = await prisma.card.findMany()
-    * ```
-    */
-  get card(): Prisma.CardDelegate<ExtArgs, { omit: OmitOpts }>;
-
-  /**
    * `prisma.appRelease`: Exposes CRUD operations for the **AppRelease** model.
     * Example usage:
     * ```ts

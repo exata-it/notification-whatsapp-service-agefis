@@ -51,13 +51,6 @@ export const AnyNull = runtime.AnyNull
 
 
 export const ModelName = {
-  User: 'User',
-  Role: 'Role',
-  Permission: 'Permission',
-  UserRole: 'UserRole',
-  UserPermission: 'UserPermission',
-  RolePermission: 'RolePermission',
-  Card: 'Card',
   AppRelease: 'AppRelease'
 } as const
 
@@ -77,92 +70,10 @@ export const TransactionIsolationLevel = {
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
 
 
-export const UserScalarFieldEnum = {
-  id: 'id',
-  email: 'email',
-  login: 'login',
-  password_hash: 'password_hash',
-  name: 'name',
-  active: 'active',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
-
-
-export const RoleScalarFieldEnum = {
-  id: 'id',
-  name: 'name',
-  active: 'active',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type RoleScalarFieldEnum = (typeof RoleScalarFieldEnum)[keyof typeof RoleScalarFieldEnum]
-
-
-export const PermissionScalarFieldEnum = {
-  id: 'id',
-  identifier: 'identifier',
-  name: 'name',
-  description: 'description',
-  category: 'category',
-  active: 'active',
-  createdAt: 'createdAt'
-} as const
-
-export type PermissionScalarFieldEnum = (typeof PermissionScalarFieldEnum)[keyof typeof PermissionScalarFieldEnum]
-
-
-export const UserRoleScalarFieldEnum = {
-  id: 'id',
-  userId: 'userId',
-  roleId: 'roleId',
-  assignedAt: 'assignedAt',
-  assignedBy: 'assignedBy',
-  expiresAt: 'expiresAt'
-} as const
-
-export type UserRoleScalarFieldEnum = (typeof UserRoleScalarFieldEnum)[keyof typeof UserRoleScalarFieldEnum]
-
-
-export const UserPermissionScalarFieldEnum = {
-  id: 'id',
-  userId: 'userId',
-  permissionId: 'permissionId',
-  grantedAt: 'grantedAt',
-  grantedBy: 'grantedBy',
-  expiresAt: 'expiresAt'
-} as const
-
-export type UserPermissionScalarFieldEnum = (typeof UserPermissionScalarFieldEnum)[keyof typeof UserPermissionScalarFieldEnum]
-
-
-export const RolePermissionScalarFieldEnum = {
-  id: 'id',
-  roleId: 'roleId',
-  permissionId: 'permissionId',
-  grantedAt: 'grantedAt'
-} as const
-
-export type RolePermissionScalarFieldEnum = (typeof RolePermissionScalarFieldEnum)[keyof typeof RolePermissionScalarFieldEnum]
-
-
-export const CardScalarFieldEnum = {
-  id: 'id',
-  title: 'title',
-  description: 'description',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type CardScalarFieldEnum = (typeof CardScalarFieldEnum)[keyof typeof CardScalarFieldEnum]
-
-
 export const AppReleaseScalarFieldEnum = {
   id: 'id',
   platform: 'platform',
+  channel: 'channel',
   version: 'version',
   versionCode: 'versionCode',
   objectKey: 'objectKey',
