@@ -2,98 +2,98 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Commands
+## Comandos
 
 ```bash
-bun run dev          # dev server with hot reload
-bun run build        # bundle to dist/
-bun run start        # run from dist/
+bun run dev          # servidor de desenvolvimento com hot reload
+bun run build        # empacota em dist/
+bun run start        # executa a partir de dist/
 
 bun run lint         # biome check
 bun run format       # biome format
 
-bun run prisma:generate   # regenerate Prisma client after schema changes
-bun run prisma:studio     # open Prisma Studio GUI
+bun run prisma:generate   # regenera o client do Prisma após mudanças no schema
+bun run prisma:studio     # abre o Prisma Studio (GUI)
 
-bun run seed:admin   # seed roles, permissions, and SUPER_ADMIN user
-bun run seed:cards   # seed card data
+bun run seed:admin   # popula papéis, permissões e o usuário SUPER_ADMIN
+bun run seed:cards   # popula dados de cards
 
-# Code generators (interactive CLI)
-bun run generate:crud         # controller + route + permissions for a new Prisma model
-bun run generate:permissions  # permissions seed only
-bun run generate:controller   # controller only
+# Geradores de código (CLI interativa)
+bun run generate:crud         # controller + rota + permissões para um novo model Prisma
+bun run generate:permissions  # apenas o seed de permissões
+bun run generate:controller   # apenas o controller
 ```
 
-No test runner is configured. No test commands exist.
+Testes: `bun test tests` (tudo) e `bun run test:e2e` (`tests/integration`). Para um único arquivo: `bun test tests/integration/arquivo.test.js`.
 
-## Architecture
+## Arquitetura
 
-**Runtime**: Bun. **Framework**: Fastify v5. **ORM**: Prisma 7 (PostgreSQL). **Validation**: Zod via `fastify-type-provider-zod`. **Linter**: Biome.
+**Runtime**: Bun. **Framework**: Fastify v5. **ORM**: Prisma 7 (PostgreSQL). **Validação**: Zod via `fastify-type-provider-zod`. **Linter**: Biome.
 
-### Request lifecycle
+### Ciclo de vida da requisição
 
 ```
 src/index.js → createApp() → plugins (cors, swagger, jwt, qs)
-                            → routes registered with prefix /api/{domain}
+                            → rotas registradas com prefixo /api/{dominio}
                             → setErrorHandler(errorHandler)
 ```
 
-All Zod/Prisma/Fastify errors are normalized in `src/helpers/_handleerror.helper.js`. Throw `error.statusCode = 404` from a controller to get a 404 response.
+Todos os erros de Zod/Prisma/Fastify são normalizados em `src/helpers/_handleerror.helper.js`. Defina `error.statusCode = 404` em um controller para obter resposta 404.
 
-### Path aliases
+### Aliases de caminho
 
-`src/*` resolves to `./src/*` (configured in `jsconfig.json`, resolved natively by Bun).
+`src/*` resolve para `./src/*` (configurado em `jsconfig.json`, resolvido nativamente pelo Bun).
 
-### Base abstractions
+### Abstrações base
 
 **`baseController(model, params)`** (`src/controllers/base.controller.js`)  
-Factory that returns `{ all, fetch, one, post, put, del }` handlers for a Prisma model. Supports:
-- `select`, `include`, `omit` — static Prisma query options
-- `allowedFields` — whitelist for dynamic `?select=field1,field2` query params
-- `sensitiveFields` — always excluded from dynamic select
+Factory que devolve os handlers `{ all, fetch, one, post, put, del }` para um model Prisma. Suporta:
+- `select`, `include`, `omit` — opções estáticas de consulta do Prisma
+- `allowedFields` — lista de campos permitidos para o parâmetro dinâmico `?select=campo1,campo2`
+- `sensitiveFields` — sempre excluídos do select dinâmico
 
 **`baseRouter(fastify, controller, options)`** (`src/routes/base.route.js`)  
-Auto-registers 6 REST endpoints for a controller:
-| Method | Path | Handler |
-|--------|------|---------|
+Registra automaticamente 6 endpoints REST para um controller:
+| Método | Caminho | Handler |
+|--------|---------|---------|
 | `POST` | `/` | `post` |
 | `PUT` | `/:id` | `put` |
-| `GET` | `/all` | `all` (no pagination) |
-| `GET` | `/` | `fetch` (paginated) |
+| `GET` | `/all` | `all` (sem paginação) |
+| `GET` | `/` | `fetch` (paginado) |
 | `GET` | `/:id` | `one` |
 | `DELETE` | `/:id` | `del` |
 
-Options: `tag`, `schemas` (`createSchema`, `updateSchema`, `entitySchema` — all Zod), per-verb `middleware` arrays.
+Opções: `tag`, `schemas` (`createSchema`, `updateSchema`, `entitySchema` — todos Zod), arrays de `middleware` por verbo.
 
-### RBAC / Authorization
+### RBAC / Autorização
 
-Permission identifiers follow `resource:action` format (e.g. `users:read`, `cards:*`, `*`).
+Os identificadores de permissão seguem o formato `recurso:ação` (ex.: `users:read`, `cards:*`, `*`).
 
-Middleware in `src/middleware/_authorization.middleware.js`:
-- `authenticate` — verifies JWT (`request.jwtVerify()`)
-- `authorize(['users:read', 'users:update'])` — checks user has ≥1 permission (pass `{ requireAll: true }` to require all)
-- `requireAdmin` — role must be `ADMIN` or `SUPER_ADMIN`
-- `requireSuperAdmin` — role must be `SUPER_ADMIN`
+Middleware em `src/middleware/_authorization.middleware.js`:
+- `authenticate` — verifica o JWT (`request.jwtVerify()`)
+- `authorize(['users:read', 'users:update'])` — confere se o usuário tem ≥1 permissão (passe `{ requireAll: true }` para exigir todas)
+- `requireAdmin` — o papel deve ser `ADMIN` ou `SUPER_ADMIN`
+- `requireSuperAdmin` — o papel deve ser `SUPER_ADMIN`
 
-`authorizationService` (`src/services/_authorization.service.js`) caches permissions per user in memory (5-minute TTL). Call `authorizationService.clearCache(userId)` after modifying a user's roles/permissions.
+O `authorizationService` (`src/services/_authorization.service.js`) mantém em memória as permissões por usuário (TTL de 5 minutos). Chame `authorizationService.clearCache(userId)` após alterar papéis/permissões de um usuário.
 
-### Adding a new domain
+### Adicionando um novo domínio
 
-1. Run `bun run generate:crud` and answer the prompts (Prisma model name, module folder, resource name).
-2. Register the generated routes in `src/app.js`:
+1. Rode `bun run generate:crud` e responda às perguntas (nome do model Prisma, pasta do módulo, nome do recurso).
+2. Registre as rotas geradas em `src/app.js`:
    ```js
    import { myDomainRoutes } from './routes/mydomain'
    server.register(myDomainRoutes, { prefix: '/api/mydomain' })
    ```
-3. Run `bun run seed:admin` to push the generated permissions to the database.
+3. Rode `bun run seed:admin` para gravar as permissões geradas no banco.
 
 ### Prisma
 
-- Schema: `prisma/schema.prisma` — two DB schemas: `seguranca` (auth models) and `public` (app models).
-- Generated client: `prisma/generated/prisma/` — import from there, not from `@prisma/client` directly.
-- All IDs use UUID v7 (`@default(uuid(7))`).
-- After editing the schema run `bun run prisma:generate`.
+- Schema: `prisma/schema.prisma` — dois schemas de banco: `seguranca` (models de autenticação) e `public` (models da aplicação).
+- Client gerado: `prisma/generated/prisma/` — importe dali, não diretamente de `@prisma/client`.
+- Todos os IDs usam UUID v7 (`@default(uuid(7))`).
+- Após editar o schema, rode `bun run prisma:generate`.
 
-### Code style (Biome)
+### Estilo de código (Biome)
 
-Tabs, width 2. Single quotes. No semicolons (only where required). No trailing commas. Line width 80.
+Tabs, largura 2. Aspas simples. Sem ponto e vírgula (apenas onde necessário). Sem vírgulas finais. Largura de linha 80.
